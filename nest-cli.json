@@ -10,6 +10,15 @@
     "tsConfigPath": "tsconfig.json"
   },
   "projects": {
+    "gateway": {
+      "type": "application",
+      "root": "apps/gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
+      }
+    },
     "admin-service": {
       "type": "application",
       "root": "apps/admin-service",
