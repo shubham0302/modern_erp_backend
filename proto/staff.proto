@@ -1,0 +1,254 @@
+syntax = "proto3";
+package staff;
+
+service StaffService {
+  // Auth
+  rpc Login (LoginRequest) returns (AuthTokenResponse);
+  rpc Refresh (RefreshRequest) returns (AuthTokenResponse);
+  rpc Logout (LogoutRequest) returns (SuccessResponse);
+  rpc ChangePassword (ChangePasswordRequest) returns (SuccessResponse);
+
+  // Gateway user context
+  rpc GetStaff (GetStaffRequest) returns (GetStaffResponse);
+
+  // Roles
+  rpc ListRoles (ListRolesRequest) returns (ListRolesResponse);
+  rpc GetRole (GetRoleRequest) returns (RoleDetailResponse);
+  rpc CreateRole (CreateRoleRequest) returns (RoleDetailResponse);
+  rpc UpdateRole (UpdateRoleRequest) returns (RoleResponse);
+  rpc DeleteRole (DeleteRoleRequest) returns (SuccessResponse);
+  rpc ReplaceRolePermissions (ReplaceRolePermissionsRequest) returns (RolePermissionsResponse);
+
+  // Staff CRUD
+  rpc ListStaff (ListStaffRequest) returns (ListStaffResponse);
+  rpc GetStaffDetail (GetStaffDetailRequest) returns (StaffDetailResponse);
+  rpc CreateStaff (CreateStaffRequest) returns (StaffResponse);
+  rpc UpdateStaff (UpdateStaffRequest) returns (StaffResponse);
+  rpc DeleteStaff (DeleteStaffRequest) returns (SuccessResponse);
+  rpc SetStaffActive (SetStaffActiveRequest) returns (StaffResponse);
+  rpc AdminChangeStaffPassword (AdminChangeStaffPasswordRequest) returns (SuccessResponse);
+
+  // Security logs
+  rpc ListSecurityLogs (ListSecurityLogsRequest) returns (ListSecurityLogsResponse);
+  rpc WriteSecurityLog (WriteSecurityLogRequest) returns (SuccessResponse);
+}
+
+message Staff {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string role_id = 5;
+  bool is_active = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message Role {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message Permission {
+  string module = 1;
+  bool can_read = 2;
+  bool can_write = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string ip = 3;
+  string device_id = 4;
+  string app_version = 5;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+  string ip = 2;
+  string device_id = 3;
+  string app_version = 4;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message ChangePasswordRequest {
+  string staff_id = 1;
+  string current_password = 2;
+  string new_password = 3;
+}
+
+message AuthTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
+  StaffWithRole staff = 4;
+}
+
+message StaffWithRole {
+  Staff staff = 1;
+  Role role = 2;
+  repeated Permission permissions = 3;
+}
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+message GetStaffRequest {
+  string id = 1;
+}
+
+message GetStaffResponse {
+  Staff staff = 1;
+  Role role = 2;
+  repeated Permission permissions = 3;
+}
+
+message ListRolesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+}
+
+message ListRolesResponse {
+  repeated Role items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetRoleRequest {
+  string id = 1;
+}
+
+message RoleDetailResponse {
+  Role role = 1;
+  repeated Permission permissions = 2;
+}
+
+message CreateRoleRequest {
+  string name = 1;
+  string description = 2;
+  repeated Permission permissions = 3;
+}
+
+message UpdateRoleRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+}
+
+message RoleResponse {
+  Role role = 1;
+}
+
+message DeleteRoleRequest {
+  string id = 1;
+}
+
+message ReplaceRolePermissionsRequest {
+  string role_id = 1;
+  repeated Permission permissions = 2;
+}
+
+message RolePermissionsResponse {
+  repeated Permission permissions = 1;
+}
+
+message ListStaffRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+  string role_id = 4;
+  optional bool is_active = 5;
+}
+
+message ListStaffResponse {
+  repeated Staff items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetStaffDetailRequest {
+  string id = 1;
+}
+
+message StaffDetailResponse {
+  Staff staff = 1;
+  Role role = 2;
+  repeated Permission permissions = 3;
+}
+
+message CreateStaffRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string password = 4;
+  string role_id = 5;
+}
+
+message UpdateStaffRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string phone = 3;
+  optional string role_id = 4;
+}
+
+message StaffResponse {
+  Staff staff = 1;
+}
+
+message DeleteStaffRequest {
+  string id = 1;
+}
+
+message SetStaffActiveRequest {
+  string id = 1;
+  bool is_active = 2;
+}
+
+message AdminChangeStaffPasswordRequest {
+  string id = 1;
+  string new_password = 2;
+}
+
+message SecurityLog {
+  string id = 1;
+  string staff_id = 2;
+  string staff_name = 3;
+  string action_type = 4;
+  string description = 5;
+  string ip = 6;
+  string created_at = 7;
+}
+
+message ListSecurityLogsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string staff_id = 3;
+  string action_type = 4;
+  string from = 5;
+  string to = 6;
+}
+
+message ListSecurityLogsResponse {
+  repeated SecurityLog items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message WriteSecurityLogRequest {
+  string staff_id = 1;
+  string staff_name = 2;
+  string action_type = 3;
+  string description = 4;
+  string ip = 5;
+}

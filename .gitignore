@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+keys/*.pem
+libs/grpc-types/src/generated/
+*.log
+.DS_Store
+.idea/
+.vscode/

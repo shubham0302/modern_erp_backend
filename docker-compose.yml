@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: modern_erp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: modern_erp
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: modern_erp_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - modern_erp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U modern_erp -d modern_erp_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: modern_erp_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - modern_erp_redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  modern_erp_pgdata:
+  modern_erp_redisdata:

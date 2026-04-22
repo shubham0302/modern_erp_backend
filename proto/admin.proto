@@ -1,0 +1,153 @@
+syntax = "proto3";
+package admin;
+
+service AdminService {
+  // Auth
+  rpc Login (LoginRequest) returns (AuthTokenResponse);
+  rpc Refresh (RefreshRequest) returns (AuthTokenResponse);
+  rpc Logout (LogoutRequest) returns (SuccessResponse);
+  rpc ChangePassword (ChangePasswordRequest) returns (SuccessResponse);
+
+  // User context (called by gateway)
+  rpc GetAdmin (GetAdminRequest) returns (GetAdminResponse);
+
+  // Admin CRUD (super-admin only; enforced inside service)
+  rpc ListAdmins (ListAdminsRequest) returns (ListAdminsResponse);
+  rpc CreateAdmin (CreateAdminRequest) returns (AdminResponse);
+  rpc UpdateAdmin (UpdateAdminRequest) returns (AdminResponse);
+  rpc DeleteAdmin (DeleteAdminRequest) returns (SuccessResponse);
+
+  // Security logs
+  rpc ListSecurityLogs (ListSecurityLogsRequest) returns (ListSecurityLogsResponse);
+  rpc WriteSecurityLog (WriteSecurityLogRequest) returns (SuccessResponse);
+}
+
+message Admin {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  bool is_super_admin = 5;
+  bool is_active = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string ip = 3;
+  string device_id = 4;
+  string app_version = 5;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+  string ip = 2;
+  string device_id = 3;
+  string app_version = 4;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message ChangePasswordRequest {
+  string admin_id = 1;
+  string current_password = 2;
+  string new_password = 3;
+}
+
+message AuthTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
+  Admin admin = 4;
+}
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+message GetAdminRequest {
+  string id = 1;
+}
+
+message GetAdminResponse {
+  Admin admin = 1;
+}
+
+message ListAdminsRequest {
+  string actor_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string search = 4;
+}
+
+message ListAdminsResponse {
+  repeated Admin items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message CreateAdminRequest {
+  string actor_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string password = 5;
+  bool is_super_admin = 6;
+}
+
+message UpdateAdminRequest {
+  string actor_id = 1;
+  string id = 2;
+  optional string name = 3;
+  optional string phone = 4;
+  optional bool is_active = 5;
+  optional bool is_super_admin = 6;
+}
+
+message AdminResponse {
+  Admin admin = 1;
+}
+
+message DeleteAdminRequest {
+  string actor_id = 1;
+  string id = 2;
+}
+
+message SecurityLog {
+  string id = 1;
+  string admin_id = 2;
+  string admin_name = 3;
+  string action_type = 4;
+  string description = 5;
+  string ip = 6;
+  string created_at = 7;
+}
+
+message ListSecurityLogsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string admin_id = 3;
+  string action_type = 4;
+  string from = 5;
+  string to = 6;
+}
+
+message ListSecurityLogsResponse {
+  repeated SecurityLog items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message WriteSecurityLogRequest {
+  string admin_id = 1;
+  string admin_name = 2;
+  string action_type = 3;
+  string description = 4;
+  string ip = 5;
+}

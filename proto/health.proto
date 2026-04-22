@@ -1,0 +1,17 @@
+syntax = "proto3";
+package health;
+
+service HealthService {
+  rpc Check (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+  string service = 2;
+  string version = 3;
+  double uptime = 4;
+  map<string, string> checks = 5;
+  string timestamp = 6;
+}
