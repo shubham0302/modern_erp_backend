@@ -17,13 +17,14 @@ async function bootstrap(): Promise<void> {
     options: {
       package: ['admin', 'health'],
       protoPath: [
-        join(__dirname, '../../../proto/admin.proto'),
-        join(__dirname, '../../../proto/health.proto'),
+        join(process.cwd(), 'proto/admin.proto'),
+        join(process.cwd(), 'proto/health.proto'),
       ],
       url,
     },
   });
 
+  await app.init();
   await app.startAllMicroservices();
 
   // eslint-disable-next-line no-console

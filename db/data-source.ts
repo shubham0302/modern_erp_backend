@@ -19,5 +19,4 @@ const options: DataSourceOptions = {
   logging: process.env.NODE_ENV === 'development',
 };
 
-export const AppDataSource = new DataSource(options);
-export default AppDataSource;
+export default new DataSource(options);
