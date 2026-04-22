@@ -18,6 +18,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/admin-service/tsconfig.app.json"
       }
+    },
+    "staff-service": {
+      "type": "application",
+      "root": "apps/staff-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/staff-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/staff-service/tsconfig.app.json"
+      }
     }
   }
 }
