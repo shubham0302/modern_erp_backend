@@ -79,7 +79,7 @@ export class StaffAuthService {
 
     if (!staff) {
       await bcrypt.compare(input.password, TIMING_DUMMY_HASH);
-      throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+      throw rpcError(ErrorCode.EMAIL_NOT_FOUND);
     }
 
     if (!staff.isActive) {
@@ -95,7 +95,7 @@ export class StaffAuthService {
         description: 'wrong password',
         ip: input.ip,
       });
-      throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+      throw rpcError(ErrorCode.WRONG_PASSWORD);
     }
 
     const tokens = await this.issueTokens(staff, input.ip, input.deviceId, input.appVersion);
@@ -184,7 +184,7 @@ export class StaffAuthService {
     if (!staff) throw rpcError(ErrorCode.STAFF_NOT_FOUND);
 
     const ok = await bcrypt.compare(input.currentPassword, staff.passwordHash);
-    if (!ok) throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+    if (!ok) throw rpcError(ErrorCode.WRONG_PASSWORD);
 
     const newHash = await bcrypt.hash(input.newPassword, this.bcryptRounds);
     await this.staffRepo.update({ id: staff.id }, { passwordHash: newHash });

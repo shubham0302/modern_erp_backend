@@ -1,6 +1,7 @@
 import { GatewayRequest, Public, UserContext, UserCtx } from '@modern_erp/common';
 import { AdminProto } from '@modern_erp/grpc-types';
 import { Body, Controller, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ChangePasswordDto } from '../../dto/change-password.dto';
 import { LoginDto } from '../../dto/login.dto';
@@ -12,12 +13,14 @@ function appVersion(req: GatewayRequest): string {
   return typeof v === 'string' ? v : 'unknown';
 }
 
+@ApiTags('Admin · Auth')
 @Controller('admin/auth')
 export class AdminAuthController {
   constructor(private grpc: GrpcClientRegistry) {}
 
   @Public()
   @Post('login')
+  @ApiOperation({ summary: 'Admin login — returns access + refresh tokens' })
   login(@Body() body: LoginDto, @Req() req: GatewayRequest): Promise<AdminProto.AuthTokenResponse> {
     const payload: AdminProto.LoginRequest = {
       email: body.email,
@@ -37,6 +40,7 @@ export class AdminAuthController {
 
   @Public()
   @Post('refresh')
+  @ApiOperation({ summary: 'Rotate refresh token — returns new access + refresh tokens' })
   refresh(
     @Body() body: RefreshDto,
     @Req() req: GatewayRequest,
@@ -57,6 +61,8 @@ export class AdminAuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Revoke refresh token for current session' })
   logout(
     @Body() body: RefreshDto,
     @Req() req: GatewayRequest,
@@ -72,6 +78,8 @@ export class AdminAuthController {
   }
 
   @Post('change-password')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Change the current admin\'s password' })
   changePassword(
     @Body() body: ChangePasswordDto,
     @Req() req: GatewayRequest,

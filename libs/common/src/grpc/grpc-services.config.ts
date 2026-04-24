@@ -31,6 +31,7 @@ export const GRPC_SERVICES = {
       createAdmin: { name: 'CreateAdmin' },
       updateAdmin: { name: 'UpdateAdmin' },
       deleteAdmin: { name: 'DeleteAdmin' },
+      restoreAdmin: { name: 'RestoreAdmin' },
       listSecurityLogs: { name: 'ListSecurityLogs' },
       writeSecurityLog: { name: 'WriteSecurityLog' },
     },

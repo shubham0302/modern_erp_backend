@@ -1,6 +1,7 @@
 import { GatewayRequest, Public, UserContext, UserCtx } from '@modern_erp/common';
 import { StaffProto } from '@modern_erp/grpc-types';
 import { Body, Controller, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { LoginDto } from '../../dto/login.dto';
 import { RefreshDto } from '../../dto/refresh.dto';
@@ -11,12 +12,14 @@ function appVersion(req: GatewayRequest): string {
   return typeof v === 'string' ? v : 'unknown';
 }
 
+@ApiTags('Staff · Auth')
 @Controller('staff/auth')
 export class StaffAuthController {
   constructor(private grpc: GrpcClientRegistry) {}
 
   @Public()
   @Post('login')
+  @ApiOperation({ summary: 'Staff login — returns access + refresh tokens' })
   login(@Body() body: LoginDto, @Req() req: GatewayRequest): Promise<StaffProto.AuthTokenResponse> {
     const payload: StaffProto.LoginRequest = {
       email: body.email,
@@ -36,6 +39,7 @@ export class StaffAuthController {
 
   @Public()
   @Post('refresh')
+  @ApiOperation({ summary: 'Rotate refresh token — returns new access + refresh tokens' })
   refresh(
     @Body() body: RefreshDto,
     @Req() req: GatewayRequest,
@@ -56,6 +60,8 @@ export class StaffAuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Revoke refresh token for current session' })
   logout(
     @Body() body: RefreshDto,
     @Req() req: GatewayRequest,

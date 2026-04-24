@@ -1,15 +1,22 @@
 import { GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { StaffProto } from '@modern_erp/grpc-types';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { CreateRoleDto, ReplacePermissionsDto, UpdateRoleDto } from '../../dto/role.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
+@ApiTags('Admin · Roles')
+@ApiBearerAuth('access-token')
 @Controller('admin/roles')
 export class RoleManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
 
   @Get()
+  @ApiOperation({ summary: 'List roles' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   list(
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
@@ -32,6 +39,7 @@ export class RoleManagementController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get role with permissions' })
   get(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
@@ -47,6 +55,7 @@ export class RoleManagementController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new role with permissions' })
   create(
     @Body() body: CreateRoleDto,
     @Req() req: GatewayRequest,
@@ -67,6 +76,7 @@ export class RoleManagementController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update role name/description' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateRoleDto,
@@ -83,6 +93,7 @@ export class RoleManagementController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a role' })
   delete(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
@@ -98,6 +109,7 @@ export class RoleManagementController {
   }
 
   @Put(':id/permissions')
+  @ApiOperation({ summary: 'Replace the full permission set for a role' })
   replacePermissions(
     @Param('id') id: string,
     @Body() body: ReplacePermissionsDto,

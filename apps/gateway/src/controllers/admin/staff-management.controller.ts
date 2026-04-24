@@ -1,6 +1,7 @@
 import { GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { StaffProto } from '@modern_erp/grpc-types';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import {
   AdminChangeStaffPasswordDto,
@@ -10,11 +11,19 @@ import {
 } from '../../dto/staff.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
+@ApiTags('Admin · Staff management')
+@ApiBearerAuth('access-token')
 @Controller('admin/staff')
 export class StaffManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
 
   @Get()
+  @ApiOperation({ summary: 'List staff (filterable)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'roleId', required: false, type: String })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   list(
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
@@ -41,6 +50,7 @@ export class StaffManagementController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get staff detail by id' })
   getDetail(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
@@ -56,6 +66,7 @@ export class StaffManagementController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new staff member' })
   create(
     @Body() body: CreateStaffDto,
     @Req() req: GatewayRequest,
@@ -78,6 +89,7 @@ export class StaffManagementController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update staff name/phone/role' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateStaffDto,
@@ -94,6 +106,7 @@ export class StaffManagementController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a staff member' })
   delete(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
@@ -109,6 +122,7 @@ export class StaffManagementController {
   }
 
   @Patch(':id/active')
+  @ApiOperation({ summary: 'Activate or deactivate a staff member' })
   setActive(
     @Param('id') id: string,
     @Body() body: SetStaffActiveDto,
@@ -125,6 +139,7 @@ export class StaffManagementController {
   }
 
   @Post(':id/change-password')
+  @ApiOperation({ summary: 'Admin-initiated password reset for a staff member' })
   adminChangePassword(
     @Param('id') id: string,
     @Body() body: AdminChangeStaffPasswordDto,

@@ -1,6 +1,8 @@
+import { GrpcExceptionFilter } from '@modern_erp/common';
 import { ModernERPLoggerModule } from '@modern_erp/logger';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AdminAuthGrpcController } from './controllers/admin-auth.grpc-controller';
@@ -35,7 +37,13 @@ import { SuperAdminSeederService } from './services/super-admin-seeder.service';
     }),
     TypeOrmModule.forFeature([Admin, AdminRefreshToken, AdminSecurityLog]),
   ],
-  providers: [AdminSecurityLogService, AdminAuthService, AdminCrudService, SuperAdminSeederService],
+  providers: [
+    { provide: APP_FILTER, useClass: GrpcExceptionFilter },
+    AdminSecurityLogService,
+    AdminAuthService,
+    AdminCrudService,
+    SuperAdminSeederService,
+  ],
   controllers: [
     HealthGrpcController,
     AdminAuthGrpcController,

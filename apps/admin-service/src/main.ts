@@ -12,23 +12,23 @@ async function bootstrap(): Promise<void> {
 
   const url = config.getOrThrow<string>('ADMIN_SERVICE_URL');
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.GRPC,
-    options: {
-      package: ['admin', 'health'],
-      protoPath: [
-        join(process.cwd(), 'proto/admin.proto'),
-        join(process.cwd(), 'proto/health.proto'),
-      ],
-      url,
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.GRPC,
+      options: {
+        package: ['admin', 'health'],
+        protoPath: [
+          join(process.cwd(), 'proto/admin.proto'),
+          join(process.cwd(), 'proto/health.proto'),
+        ],
+        url,
+      },
     },
-  });
+    { inheritAppConfig: true },
+  );
 
   await app.init();
   await app.startAllMicroservices();
-
-  // eslint-disable-next-line no-console
-  console.log(`admin-service started on ${url}`);
 }
 
 void bootstrap();

@@ -74,4 +74,10 @@ export class AdminCrudGrpcController {
   delete(data: AdminProto.DeleteAdminRequest): Promise<AdminProto.SuccessResponse> {
     return this.crud.delete({ actorId: data.actorId, id: data.id });
   }
+
+  @GrpcMethod('AdminService', 'RestoreAdmin')
+  async restore(data: AdminProto.RestoreAdminRequest): Promise<AdminProto.AdminResponse> {
+    const admin = await this.crud.restore({ actorId: data.actorId, id: data.id });
+    return { admin: toProto(admin) };
+  }
 }

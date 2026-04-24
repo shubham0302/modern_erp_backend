@@ -12,6 +12,8 @@ const DEFAULT_MESSAGES: Record<string, string> = {
   INVALID_TOKEN: 'Invalid authentication',
   PLATFORM_MISMATCH: 'Platform mismatch',
   INVALID_CREDENTIALS: 'Invalid email or password',
+  EMAIL_NOT_FOUND: 'No account found with this email',
+  WRONG_PASSWORD: 'Incorrect password',
   REFRESH_TOKEN_REUSE_DETECTED: 'Session invalidated for security — please login again',
 
   USER_NOT_FOUND: 'User not found',

@@ -74,7 +74,7 @@ export class AdminAuthService {
 
     if (!admin) {
       await bcrypt.compare(input.password, TIMING_DUMMY_HASH);
-      throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+      throw rpcError(ErrorCode.EMAIL_NOT_FOUND);
     }
 
     if (!admin.isActive) {
@@ -90,7 +90,7 @@ export class AdminAuthService {
         description: 'wrong password',
         ip: input.ip,
       });
-      throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+      throw rpcError(ErrorCode.WRONG_PASSWORD);
     }
 
     const tokens = await this.issueTokens(admin, input.ip, input.deviceId, input.appVersion);
@@ -172,7 +172,7 @@ export class AdminAuthService {
     if (!admin) throw rpcError(ErrorCode.ADMIN_NOT_FOUND);
 
     const ok = await bcrypt.compare(input.currentPassword, admin.passwordHash);
-    if (!ok) throw rpcError(ErrorCode.INVALID_CREDENTIALS);
+    if (!ok) throw rpcError(ErrorCode.WRONG_PASSWORD);
 
     const newHash = await bcrypt.hash(input.newPassword, this.bcryptRounds);
     await this.adminRepo.update({ id: admin.id }, { passwordHash: newHash });

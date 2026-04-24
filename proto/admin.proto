@@ -16,6 +16,7 @@ service AdminService {
   rpc CreateAdmin (CreateAdminRequest) returns (AdminResponse);
   rpc UpdateAdmin (UpdateAdminRequest) returns (AdminResponse);
   rpc DeleteAdmin (DeleteAdminRequest) returns (SuccessResponse);
+  rpc RestoreAdmin (RestoreAdminRequest) returns (AdminResponse);
 
   // Security logs
   rpc ListSecurityLogs (ListSecurityLogsRequest) returns (ListSecurityLogsResponse);
@@ -114,6 +115,11 @@ message AdminResponse {
 }
 
 message DeleteAdminRequest {
+  string actor_id = 1;
+  string id = 2;
+}
+
+message RestoreAdminRequest {
   string actor_id = 1;
   string id = 2;
 }

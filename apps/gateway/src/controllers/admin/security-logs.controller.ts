@@ -1,6 +1,7 @@
 import { GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { AdminProto, StaffProto } from '@modern_erp/grpc-types';
 import { Controller, Get, Query, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
@@ -15,11 +16,20 @@ interface MergedLog {
   createdAt: string;
 }
 
+@ApiTags('Admin · Security logs')
+@ApiBearerAuth('access-token')
 @Controller('admin/security-logs')
 export class SecurityLogsController {
   constructor(private grpc: GrpcClientRegistry) {}
 
   @Get()
+  @ApiOperation({ summary: 'List merged admin + staff security logs' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'actionType', required: false, type: String })
+  @ApiQuery({ name: 'userId', required: false, type: String })
+  @ApiQuery({ name: 'from', required: false, type: String, description: 'ISO-8601 timestamp' })
+  @ApiQuery({ name: 'to', required: false, type: String, description: 'ISO-8601 timestamp' })
   async list(
     @Query('page') pageStr: string | undefined,
     @Query('limit') limitStr: string | undefined,

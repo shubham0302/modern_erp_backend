@@ -1,6 +1,8 @@
+import { GrpcExceptionFilter } from '@modern_erp/common';
 import { ModernERPLoggerModule } from '@modern_erp/logger';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { HealthGrpcController } from './controllers/health.grpc-controller';
@@ -38,7 +40,13 @@ import { StaffSecurityLogService } from './services/staff-security-log.service';
     }),
     TypeOrmModule.forFeature([Role, RolePermission, Staff, StaffRefreshToken, StaffSecurityLog]),
   ],
-  providers: [StaffSecurityLogService, RoleService, StaffAuthService, StaffCrudService],
+  providers: [
+    { provide: APP_FILTER, useClass: GrpcExceptionFilter },
+    StaffSecurityLogService,
+    RoleService,
+    StaffAuthService,
+    StaffCrudService,
+  ],
   controllers: [
     HealthGrpcController,
     StaffAuthGrpcController,

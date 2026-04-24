@@ -124,7 +124,7 @@ describe('AdminAuthService.login', () => {
     );
   });
 
-  it('throws INVALID_CREDENTIALS when email not found', async () => {
+  it('throws EMAIL_NOT_FOUND when email not found', async () => {
     const { service, adminRepo } = await setup();
     adminRepo.findOne.mockResolvedValue(null);
 
@@ -137,7 +137,7 @@ describe('AdminAuthService.login', () => {
         appVersion: '1.0.0',
       }),
     ).rejects.toMatchObject({
-      error: { errorCode: ErrorCode.INVALID_CREDENTIALS },
+      error: { errorCode: ErrorCode.EMAIL_NOT_FOUND },
     });
   });
 
@@ -173,7 +173,7 @@ describe('AdminAuthService.login', () => {
         appVersion: '1.0.0',
       }),
     ).rejects.toMatchObject({
-      error: { errorCode: ErrorCode.INVALID_CREDENTIALS },
+      error: { errorCode: ErrorCode.WRONG_PASSWORD },
     });
     expect(log.write).toHaveBeenCalledWith(
       expect.objectContaining({ actionType: AdminActionType.LOGIN_FAILED }),
@@ -343,7 +343,7 @@ describe('AdminAuthService.changePassword', () => {
     );
   });
 
-  it('throws INVALID_CREDENTIALS on wrong current password', async () => {
+  it('throws WRONG_PASSWORD on wrong current password', async () => {
     const { service, adminRepo } = await setup();
     const passwordHash = await bcrypt.hash('old-pw', 4);
     adminRepo.findOne.mockResolvedValue(makeAdmin({ passwordHash }));
@@ -355,7 +355,7 @@ describe('AdminAuthService.changePassword', () => {
         newPassword: 'New-pw-12',
       }),
     ).rejects.toMatchObject({
-      error: { errorCode: ErrorCode.INVALID_CREDENTIALS },
+      error: { errorCode: ErrorCode.WRONG_PASSWORD },
     });
   });
 

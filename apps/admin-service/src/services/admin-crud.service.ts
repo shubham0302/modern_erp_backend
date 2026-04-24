@@ -101,7 +101,9 @@ export class AdminCrudService {
     isSuperAdmin?: boolean;
   }): Promise<Admin> {
     const actor = await this.assertSuperAdmin(input.actorId);
+
     const target = await this.repo.findOne({ where: { id: input.id } });
+
     if (!target) throw rpcError(ErrorCode.ADMIN_NOT_FOUND);
 
     if (target.isSuperAdmin && (input.isActive === false || input.isSuperAdmin === false)) {
@@ -157,6 +159,31 @@ export class AdminCrudService {
     });
 
     return { success: true };
+  }
+
+  async restore(input: { actorId: string; id: string }): Promise<Admin> {
+    const actor = await this.assertSuperAdmin(input.actorId);
+
+    const target = await this.repo.findOne({
+      where: { id: input.id },
+      withDeleted: true,
+    });
+    if (!target) throw rpcError(ErrorCode.ADMIN_NOT_FOUND);
+
+    await this.repo.restore({ id: target.id });
+    await this.repo.update({ id: target.id }, { isActive: true });
+
+    const restored = await this.repo.findOneOrFail({ where: { id: target.id } });
+
+    await this.log.write({
+      adminId: actor.id,
+      adminName: actor.name,
+      actionType: AdminActionType.ADMIN_RESTORED,
+      description: `restored admin ${restored.email}`,
+      ip: null,
+    });
+
+    return restored;
   }
 
   async getById(id: string): Promise<Admin> {

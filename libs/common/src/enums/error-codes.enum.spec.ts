@@ -6,6 +6,8 @@ describe('ErrorCode enum', () => {
     expect(ErrorCode.TOKEN_EXPIRED).toBe('TOKEN_EXPIRED');
     expect(ErrorCode.INVALID_TOKEN).toBe('INVALID_TOKEN');
     expect(ErrorCode.INVALID_CREDENTIALS).toBe('INVALID_CREDENTIALS');
+    expect(ErrorCode.EMAIL_NOT_FOUND).toBe('EMAIL_NOT_FOUND');
+    expect(ErrorCode.WRONG_PASSWORD).toBe('WRONG_PASSWORD');
     expect(ErrorCode.REFRESH_TOKEN_REUSE_DETECTED).toBe('REFRESH_TOKEN_REUSE_DETECTED');
   });
 

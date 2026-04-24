@@ -25,6 +25,9 @@ export type {
 export { Public, IS_PUBLIC_KEY } from './decorators/public.decorator';
 export { UserCtx } from './decorators/user-context.decorator';
 
+// Filters
+export { GrpcExceptionFilter } from './filters/grpc-exception.filter';
+
 // gRPC
 export { extractGrpcContext } from './grpc/grpc-context.util';
 export type { GrpcRequestContext } from './grpc/grpc-context.util';

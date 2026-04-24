@@ -12,10 +12,13 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { CreateAdminDto, UpdateAdminDto } from '../../dto/admin.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
+@ApiTags('Admin · Admins')
+@ApiBearerAuth('access-token')
 @Controller('admin/admins')
 export class AdminManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
@@ -27,6 +30,10 @@ export class AdminManagementController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List admins (super-admin only)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   list(
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
@@ -51,6 +58,7 @@ export class AdminManagementController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new admin (super-admin only)' })
   create(
     @Body() body: CreateAdminDto,
     @Req() req: GatewayRequest,
@@ -75,6 +83,7 @@ export class AdminManagementController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an admin (super-admin only)' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateAdminDto,
@@ -100,6 +109,7 @@ export class AdminManagementController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete an admin (super-admin only)' })
   delete(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
@@ -109,6 +119,23 @@ export class AdminManagementController {
     return this.grpc.call<AdminProto.DeleteAdminRequest, AdminProto.SuccessResponse>(
       'admin',
       'deleteAdmin',
+      { actorId: ctx.userId, id },
+      ctx,
+      req.requestId,
+    );
+  }
+
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore a soft-deleted admin (super-admin only)' })
+  restore(
+    @Param('id') id: string,
+    @Req() req: GatewayRequest,
+    @UserCtx() ctx: UserContext,
+  ): Promise<AdminProto.AdminResponse> {
+    this.assertSuper(ctx);
+    return this.grpc.call<AdminProto.RestoreAdminRequest, AdminProto.AdminResponse>(
+      'admin',
+      'restoreAdmin',
       { actorId: ctx.userId, id },
       ctx,
       req.requestId,

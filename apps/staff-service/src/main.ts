@@ -12,23 +12,23 @@ async function bootstrap(): Promise<void> {
 
   const url = config.getOrThrow<string>('STAFF_SERVICE_URL');
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.GRPC,
-    options: {
-      package: ['staff', 'health'],
-      protoPath: [
-        join(process.cwd(), 'proto/staff.proto'),
-        join(process.cwd(), 'proto/health.proto'),
-      ],
-      url,
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.GRPC,
+      options: {
+        package: ['staff', 'health'],
+        protoPath: [
+          join(process.cwd(), 'proto/staff.proto'),
+          join(process.cwd(), 'proto/health.proto'),
+        ],
+        url,
+      },
     },
-  });
+    { inheritAppConfig: true },
+  );
 
   await app.init();
   await app.startAllMicroservices();
-
-  // eslint-disable-next-line no-console
-  console.log(`staff-service started on ${url}`);
 }
 
 void bootstrap();
