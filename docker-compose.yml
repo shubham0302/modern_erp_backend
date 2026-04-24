@@ -5,14 +5,14 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: modern_erp
-      POSTGRES_PASSWORD: changeme
-      POSTGRES_DB: modern_erp_db
+      POSTGRES_PASSWORD: Modern@Erp2026
+      POSTGRES_DB: modern_erp_dev_db
     ports:
       - '5432:5432'
     volumes:
       - modern_erp_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U modern_erp -d modern_erp_db']
+      test: ['CMD-SHELL', 'pg_isready -U modern_erp -d modern_erp_dev_db']
       interval: 5s
       timeout: 5s
       retries: 5
