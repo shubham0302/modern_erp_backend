@@ -19,6 +19,8 @@ RUN npx nest build gateway \
  && npx nest build admin-service \
  && npx nest build staff-service
 
+
+FROM builder AS prod-deps
 RUN npm prune --omit=dev
 
 
@@ -33,7 +35,7 @@ RUN apk add --no-cache tini \
  && addgroup -S app \
  && adduser -S app -G app
 
-COPY --from=builder --chown=app:app /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules
 COPY --from=builder --chown=app:app /app/dist ./dist
 COPY --from=builder --chown=app:app /app/proto ./proto
 COPY --from=builder --chown=app:app /app/package.json ./package.json

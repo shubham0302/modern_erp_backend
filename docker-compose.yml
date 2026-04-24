@@ -39,6 +39,25 @@ services:
     networks:
       - modern_erp
 
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: modern-erp/migrator:latest
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+    command: npm run migration:run
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - modern_erp
+    profiles:
+      - tools
+
   gateway:
     build:
       context: .
