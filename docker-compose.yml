@@ -4,32 +4,126 @@ services:
     container_name: modern_erp_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: modern_erp
-      POSTGRES_PASSWORD: Modern@Erp2026
-      POSTGRES_DB: modern_erp_dev_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - modern_erp_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U modern_erp -d modern_erp_dev_db']
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - modern_erp
 
   redis:
     image: redis:7-alpine
     container_name: modern_erp_redis
     restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - modern_erp_redisdata:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - modern_erp
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: gateway
+    image: modern-erp/gateway:latest
+    container_name: modern_erp_gateway
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      ADMIN_SERVICE_URL: admin-service:5001
+      STAFF_SERVICE_URL: staff-service:5002
+    ports:
+      - '${GATEWAY_PORT}:${GATEWAY_PORT}'
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      admin-service:
+        condition: service_started
+      staff-service:
+        condition: service_started
+    networks:
+      - modern_erp
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: admin-service
+    image: modern-erp/admin-service:latest
+    container_name: modern_erp_admin_service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      ADMIN_SERVICE_URL: 0.0.0.0:5001
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - modern_erp
+
+  staff-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: staff-service
+    image: modern-erp/staff-service:latest
+    container_name: modern_erp_staff_service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      STAFF_SERVICE_URL: 0.0.0.0:5002
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - modern_erp
+
+networks:
+  modern_erp:
+    driver: bridge
 
 volumes:
   modern_erp_pgdata:
