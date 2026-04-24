@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'gateway',
       script: 'dist/apps/gateway/src/main.js',
-      cwd: '/modern_erp_backend',
+      cwd: '/root/modern_erp_backend',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -19,7 +19,7 @@ module.exports = {
     {
       name: 'admin-service',
       script: 'dist/apps/admin-service/src/main.js',
-      cwd: '/modern_erp_backend',
+      cwd: '/root/modern_erp_backend',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -35,7 +35,7 @@ module.exports = {
     {
       name: 'staff-service',
       script: 'dist/apps/staff-service/src/main.js',
-      cwd: '/modern_erp_backend',
+      cwd: '/root/modern_erp_backend',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
