@@ -14,7 +14,7 @@ type GrpcClient = Record<
     metadata: grpc.Metadata,
     options: { deadline: Date },
     callback: (err: grpc.ServiceError | null, response: unknown) => void,
-  ) => void
+  ) => grpc.ClientUnaryCall
 >;
 
 const LOADER_OPTIONS: protoLoader.Options = {
@@ -70,6 +70,7 @@ export class GrpcClientRegistry implements OnModuleInit {
     userContext: UserContext | null,
     requestId: string,
     timeoutMs = 5000,
+    onMetadata?: (md: grpc.Metadata) => void,
   ): Promise<TRes> {
     const client = this.clients.get(serviceName);
     const serviceDef = GRPC_SERVICES[serviceName];
@@ -97,10 +98,13 @@ export class GrpcClientRegistry implements OnModuleInit {
     const deadline = new Date(Date.now() + timeoutMs);
 
     return new Promise<TRes>((resolve, reject) => {
-      client[grpcMethod](data, metadata, { deadline }, (err, response) => {
+      const unaryCall = client[grpcMethod](data, metadata, { deadline }, (err, response) => {
         if (err) reject(err);
         else resolve(response as TRes);
       });
+      if (onMetadata) {
+        unaryCall.on('metadata', onMetadata);
+      }
     });
   }
 }

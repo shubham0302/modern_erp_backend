@@ -69,41 +69,49 @@ export class AdminAuthService {
     this.bcryptRounds = parseInt(config.getOrThrow<string>('BCRYPT_ROUNDS'), 10);
   }
 
-  async login(input: LoginInput): Promise<AuthResult> {
-    const admin = await this.adminRepo.findOne({ where: { email: input.email } });
+  async login(
+    input: LoginInput,
+    perf?: { dbStart?: number; dbEnd?: number },
+  ): Promise<AuthResult> {
+    if (perf) perf.dbStart = Date.now();
+    try {
+      const admin = await this.adminRepo.findOne({ where: { email: input.email } });
 
-    if (!admin) {
-      await bcrypt.compare(input.password, TIMING_DUMMY_HASH);
-      throw rpcError(ErrorCode.EMAIL_NOT_FOUND);
-    }
+      if (!admin) {
+        await bcrypt.compare(input.password, TIMING_DUMMY_HASH);
+        throw rpcError(ErrorCode.EMAIL_NOT_FOUND);
+      }
 
-    if (!admin.isActive) {
-      throw rpcError(ErrorCode.ACCOUNT_DEACTIVATED);
-    }
+      if (!admin.isActive) {
+        throw rpcError(ErrorCode.ACCOUNT_DEACTIVATED);
+      }
 
-    const ok = await bcrypt.compare(input.password, admin.passwordHash);
-    if (!ok) {
+      const ok = await bcrypt.compare(input.password, admin.passwordHash);
+      if (!ok) {
+        await this.log.write({
+          adminId: admin.id,
+          adminName: admin.name,
+          actionType: AdminActionType.LOGIN_FAILED,
+          description: 'wrong password',
+          ip: input.ip,
+        });
+        throw rpcError(ErrorCode.WRONG_PASSWORD);
+      }
+
+      const tokens = await this.issueTokens(admin, input.ip, input.deviceId, input.appVersion);
+
       await this.log.write({
         adminId: admin.id,
         adminName: admin.name,
-        actionType: AdminActionType.LOGIN_FAILED,
-        description: 'wrong password',
+        actionType: AdminActionType.LOGIN_SUCCESS,
+        description: 'login successful',
         ip: input.ip,
       });
-      throw rpcError(ErrorCode.WRONG_PASSWORD);
+
+      return { ...tokens, admin };
+    } finally {
+      if (perf) perf.dbEnd = Date.now();
     }
-
-    const tokens = await this.issueTokens(admin, input.ip, input.deviceId, input.appVersion);
-
-    await this.log.write({
-      adminId: admin.id,
-      adminName: admin.name,
-      actionType: AdminActionType.LOGIN_SUCCESS,
-      description: 'login successful',
-      ip: input.ip,
-    });
-
-    return { ...tokens, admin };
   }
 
   async refresh(input: RefreshInput): Promise<AuthResult> {
