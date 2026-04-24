@@ -1,0 +1,52 @@
+module.exports = {
+  apps: [
+    {
+      name: 'gateway',
+      script: 'dist/apps/gateway/main.js',
+      cwd: '/opt/modern-erp',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      out_file: '/var/log/modern-erp/gateway.out.log',
+      error_file: '/var/log/modern-erp/gateway.err.log',
+      merge_logs: true,
+      time: true,
+    },
+    {
+      name: 'admin-service',
+      script: 'dist/apps/admin-service/main.js',
+      cwd: '/opt/modern-erp',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      out_file: '/var/log/modern-erp/admin-service.out.log',
+      error_file: '/var/log/modern-erp/admin-service.err.log',
+      merge_logs: true,
+      time: true,
+    },
+    {
+      name: 'staff-service',
+      script: 'dist/apps/staff-service/main.js',
+      cwd: '/opt/modern-erp',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      out_file: '/var/log/modern-erp/staff-service.out.log',
+      error_file: '/var/log/modern-erp/staff-service.err.log',
+      merge_logs: true,
+      time: true,
+    },
+  ],
+};
