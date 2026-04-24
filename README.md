@@ -46,3 +46,4 @@ npm run migration:run    # apply pending migrations (requires .env with real DB)
 - [ ] Phase 5 — MD doc updates
 
 See `../docs/superpowers/plans/` for each phase's plan.
+# modern_erp_backend
