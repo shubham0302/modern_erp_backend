@@ -7,8 +7,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - '127.0.0.1:5432:5432'
+    expose:
+      - '5432'
     volumes:
       - modern_erp_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -27,8 +27,8 @@ services:
       - .env
     command: >
       sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
-    ports:
-      - '127.0.0.1:6379:6379'
+    expose:
+      - '6379'
     volumes:
       - modern_erp_redisdata:/data
     healthcheck:
