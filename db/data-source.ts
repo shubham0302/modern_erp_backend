@@ -11,8 +11,9 @@ const options: DataSourceOptions = {
   password: process.env.DB_PASSWORD ?? 'changeme',
   database: process.env.DB_NAME ?? 'modern_erp_db',
   entities: [
-    'apps/admin-service/src/entities/*.entity.ts',
-    'apps/staff-service/src/entities/*.entity.ts',
+    'apps/admin/src/entities/*.entity.ts',
+    'apps/staff/src/entities/*.entity.ts',
+    'apps/inventory/src/entities/*.entity.ts',
   ],
   migrations: ['db/migrations/*.ts'],
   synchronize: false,

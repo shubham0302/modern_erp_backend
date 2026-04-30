@@ -1,6 +1,6 @@
 # Modern ERP Backend
 
-NestJS monorepo for the Modern ERP platform — admin-service, staff-service, and gateway.
+NestJS monorepo for the Modern ERP platform — admin, staff, and gateway.
 
 ## Before you run anything
 
@@ -40,8 +40,8 @@ npm run migration:run    # apply pending migrations (requires .env with real DB)
 ## Phase status
 
 - [x] Phase 1 — foundation (this phase)
-- [ ] Phase 2 — admin-service
-- [ ] Phase 3 — staff-service
+- [ ] Phase 2 — admin
+- [ ] Phase 3 — staff
 - [ ] Phase 4 — gateway
 - [ ] Phase 5 — MD doc updates
 

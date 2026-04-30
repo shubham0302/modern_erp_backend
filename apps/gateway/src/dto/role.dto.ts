@@ -58,12 +58,15 @@ export class UpdateRoleDto {
   @IsOptional()
   @IsString()
   description?: string;
-}
 
-export class ReplacePermissionsDto {
-  @ApiProperty({ type: [PermissionDto] })
+  @ApiPropertyOptional({
+    type: [PermissionDto],
+    description:
+      'When provided, replaces the role\'s full permission set. Send [] to clear all permissions, omit to leave them unchanged.',
+  })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PermissionDto)
-  permissions!: PermissionDto[];
+  permissions?: PermissionDto[];
 }

@@ -10,6 +10,11 @@ import { RoleManagementController } from './controllers/admin/role-management.co
 import { SecurityLogsController } from './controllers/admin/security-logs.controller';
 import { StaffManagementController } from './controllers/admin/staff-management.controller';
 import { HealthController } from './controllers/health.controller';
+import { DesignController } from './controllers/inventory/design.controller';
+import { FinishController } from './controllers/inventory/finish.controller';
+import { InventoryMappingController } from './controllers/inventory/mapping.controller';
+import { SeriesController } from './controllers/inventory/series.controller';
+import { SizeController } from './controllers/inventory/size.controller';
 import { StaffAuthController } from './controllers/staff/staff-auth.controller';
 import { StaffMeController } from './controllers/staff/staff-me.controller';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -51,6 +56,11 @@ import { ErrorLocalizerService } from './services/error-localizer.service';
     SecurityLogsController,
     StaffAuthController,
     StaffMeController,
+    SizeController,
+    FinishController,
+    SeriesController,
+    DesignController,
+    InventoryMappingController,
   ],
 })
 export class AppModule {}

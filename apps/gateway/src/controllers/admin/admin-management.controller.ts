@@ -19,7 +19,7 @@ import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
 @ApiTags('Admin · Admins')
 @ApiBearerAuth('access-token')
-@Controller('admin/admins')
+@Controller('admin')
 export class AdminManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
 
@@ -29,7 +29,7 @@ export class AdminManagementController {
     }
   }
 
-  @Get()
+  @Get('admins')
   @ApiOperation({ summary: 'List admins (super-admin only)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -57,7 +57,7 @@ export class AdminManagementController {
     );
   }
 
-  @Post()
+  @Post('create/admin')
   @ApiOperation({ summary: 'Create a new admin (super-admin only)' })
   create(
     @Body() body: CreateAdminDto,
@@ -82,7 +82,7 @@ export class AdminManagementController {
     );
   }
 
-  @Patch(':id')
+  @Patch('update/admin/:id')
   @ApiOperation({ summary: 'Update an admin (super-admin only)' })
   update(
     @Param('id') id: string,
@@ -108,7 +108,7 @@ export class AdminManagementController {
     );
   }
 
-  @Delete(':id')
+  @Delete('delete/admin/:id')
   @ApiOperation({ summary: 'Delete an admin (super-admin only)' })
   delete(
     @Param('id') id: string,
@@ -125,7 +125,7 @@ export class AdminManagementController {
     );
   }
 
-  @Post(':id/restore')
+  @Post('restore/admin/:id')
   @ApiOperation({ summary: 'Restore a soft-deleted admin (super-admin only)' })
   restore(
     @Param('id') id: string,

@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/apps/admin-service",
-    "types": ["node", "jest"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts"]
-}

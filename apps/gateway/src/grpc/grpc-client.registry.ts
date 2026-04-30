@@ -69,7 +69,7 @@ export class GrpcClientRegistry implements OnModuleInit {
     data: TReq,
     userContext: UserContext | null,
     requestId: string,
-    timeoutMs = 5000,
+    timeoutMs = 30000,
     onMetadata?: (md: grpc.Metadata) => void,
   ): Promise<TRes> {
     const client = this.clients.get(serviceName);

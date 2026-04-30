@@ -7,8 +7,9 @@
   ],
   "scripts": {
     "build": "nest build",
-    "start:admin": "nest start admin-service --watch",
-    "start:staff": "nest start staff-service --watch",
+    "start:admin": "nest start admin --watch",
+    "start:staff": "nest start staff --watch",
+    "start:inventory": "nest start inventory --watch",
     "start:gateway": "nest start gateway --watch",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "lint": "eslint \"{apps,libs,db}/**/*.ts\" --fix",
@@ -17,11 +18,11 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "typeorm": "typeorm-ts-node-commonjs -d db/data-source.ts",
-    "migration:generate": "npm run typeorm -- migration:generate db/migrations/$npm_config_name",
-    "migration:create": "typeorm-ts-node-commonjs migration:create db/migrations/$npm_config_name",
-    "migration:run": "npm run typeorm -- migration:run",
-    "migration:revert": "npm run typeorm -- migration:revert"
+    "typeorm": "node -r ts-node/register node_modules/typeorm/cli.js",
+    "migration:generate": "yarn typeorm migration:generate db/migrations/$npm_config_name -d db/data-source.ts",
+    "migration:create": "yarn typeorm migration:create db/migrations/$npm_config_name",
+    "migration:run": "yarn typeorm migration:run -d db/data-source.ts",
+    "migration:revert": "yarn typeorm migration:revert -d db/data-source.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.8",

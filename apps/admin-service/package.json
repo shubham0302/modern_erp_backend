@@ -1,6 +1,0 @@
-{
-  "name": "@modern_erp/admin-service",
-  "version": "0.1.0",
-  "private": true,
-  "main": "src/main.ts"
-}

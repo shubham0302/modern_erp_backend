@@ -1,18 +1,18 @@
 import { GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { StaffProto } from '@modern_erp/grpc-types';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { CreateRoleDto, ReplacePermissionsDto, UpdateRoleDto } from '../../dto/role.dto';
+import { CreateRoleDto, UpdateRoleDto } from '../../dto/role.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
 @ApiTags('Admin · Roles')
 @ApiBearerAuth('access-token')
-@Controller('admin/roles')
+@Controller('admin')
 export class RoleManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
 
-  @Get()
+  @Get('roles')
   @ApiOperation({ summary: 'List roles' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -38,7 +38,7 @@ export class RoleManagementController {
     );
   }
 
-  @Get(':id')
+  @Get('role/:id')
   @ApiOperation({ summary: 'Get role with permissions' })
   get(
     @Param('id') id: string,
@@ -54,7 +54,7 @@ export class RoleManagementController {
     );
   }
 
-  @Post()
+  @Post('create/role')
   @ApiOperation({ summary: 'Create a new role with permissions' })
   create(
     @Body() body: CreateRoleDto,
@@ -75,24 +75,33 @@ export class RoleManagementController {
     );
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update role name/description' })
+  @Patch('update/role/:id')
+  @ApiOperation({
+    summary:
+      'Update a role. When `permissions` is provided, replaces the role\'s full permission set.',
+  })
   update(
     @Param('id') id: string,
     @Body() body: UpdateRoleDto,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
-  ): Promise<StaffProto.RoleResponse> {
-    return this.grpc.call<StaffProto.UpdateRoleRequest, StaffProto.RoleResponse>(
+  ): Promise<StaffProto.RoleDetailResponse> {
+    return this.grpc.call<StaffProto.UpdateRoleRequest, StaffProto.RoleDetailResponse>(
       'staff',
       'updateRole',
-      { id, name: body.name, description: body.description },
+      {
+        id,
+        name: body.name,
+        description: body.description,
+        updatePermissions: body.permissions !== undefined,
+        permissions: body.permissions ?? [],
+      },
       ctx,
       req.requestId,
     );
   }
 
-  @Delete(':id')
+  @Delete('delete/role/:id')
   @ApiOperation({ summary: 'Delete a role' })
   delete(
     @Param('id') id: string,
@@ -103,26 +112,6 @@ export class RoleManagementController {
       'staff',
       'deleteRole',
       { id },
-      ctx,
-      req.requestId,
-    );
-  }
-
-  @Put(':id/permissions')
-  @ApiOperation({ summary: 'Replace the full permission set for a role' })
-  replacePermissions(
-    @Param('id') id: string,
-    @Body() body: ReplacePermissionsDto,
-    @Req() req: GatewayRequest,
-    @UserCtx() ctx: UserContext,
-  ): Promise<StaffProto.RolePermissionsResponse> {
-    return this.grpc.call<
-      StaffProto.ReplaceRolePermissionsRequest,
-      StaffProto.RolePermissionsResponse
-    >(
-      'staff',
-      'replaceRolePermissions',
-      { roleId: id, permissions: body.permissions },
       ctx,
       req.requestId,
     );

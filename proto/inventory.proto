@@ -1,0 +1,317 @@
+syntax = "proto3";
+package inventory;
+
+service InventoryService {
+  // Size CRUD
+  rpc ListSizes (ListSizesRequest) returns (ListSizesResponse);
+  rpc GetSize (GetSizeRequest) returns (SizeResponse);
+  rpc CreateSize (CreateSizeRequest) returns (SizeResponse);
+  rpc UpdateSize (UpdateSizeRequest) returns (SizeResponse);
+  rpc DeleteSize (DeleteSizeRequest) returns (SuccessResponse);
+  rpc RestoreSize (RestoreSizeRequest) returns (SizeResponse);
+
+  // Finish CRUD
+  rpc ListFinishes (ListFinishesRequest) returns (ListFinishesResponse);
+  rpc GetFinish (GetFinishRequest) returns (FinishResponse);
+  rpc CreateFinish (CreateFinishRequest) returns (FinishResponse);
+  rpc UpdateFinish (UpdateFinishRequest) returns (FinishResponse);
+  rpc DeleteFinish (DeleteFinishRequest) returns (SuccessResponse);
+  rpc RestoreFinish (RestoreFinishRequest) returns (FinishResponse);
+
+  // Size <-> Finish mapping
+  rpc AddFinishToSize (AddFinishToSizeRequest) returns (SizeFinishResponse);
+  rpc RemoveFinishFromSize (RemoveFinishFromSizeRequest) returns (SuccessResponse);
+  rpc ListSizeFinishesBySize (ListSizeFinishesBySizeRequest) returns (ListSizeFinishesResponse);
+
+  // Series CRUD
+  rpc ListSeries (ListSeriesRequest) returns (ListSeriesResponse);
+  rpc GetSeries (GetSeriesRequest) returns (SeriesResponse);
+  rpc CreateSeries (CreateSeriesRequest) returns (SeriesResponse);
+  rpc UpdateSeries (UpdateSeriesRequest) returns (SeriesResponse);
+  rpc DeleteSeries (DeleteSeriesRequest) returns (SuccessResponse);
+  rpc RestoreSeries (RestoreSeriesRequest) returns (SeriesResponse);
+
+  // Series <-> SizeFinish mapping
+  rpc AddSeriesToSizeFinish (AddSeriesToSizeFinishRequest) returns (SeriesSizeFinishResponse);
+  rpc RemoveSeriesFromSizeFinish (RemoveSeriesFromSizeFinishRequest) returns (SuccessResponse);
+  rpc ListSeriesSizeFinishesBySeries (ListSeriesSizeFinishesBySeriesRequest) returns (ListSeriesSizeFinishesResponse);
+
+  // Design CRUD
+  rpc ListDesigns (ListDesignsRequest) returns (ListDesignsResponse);
+  rpc GetDesign (GetDesignRequest) returns (DesignResponse);
+  rpc CreateDesign (CreateDesignRequest) returns (DesignResponse);
+  rpc UpdateDesign (UpdateDesignRequest) returns (DesignResponse);
+  rpc DeleteDesign (DeleteDesignRequest) returns (SuccessResponse);
+  rpc RestoreDesign (RestoreDesignRequest) returns (DesignResponse);
+}
+
+// ----- Common -----
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// ----- Size -----
+
+message Size {
+  string id = 1;
+  string name = 2;
+  bool is_active = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message SizeResponse {
+  Size item = 1;
+}
+
+message ListSizesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+}
+
+message ListSizesResponse {
+  repeated Size items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetSizeRequest {
+  string id = 1;
+}
+
+message CreateSizeRequest {
+  string name = 1;
+}
+
+message UpdateSizeRequest {
+  string id = 1;
+  optional string name = 2;
+  optional bool is_active = 3;
+}
+
+message DeleteSizeRequest {
+  string id = 1;
+}
+
+message RestoreSizeRequest {
+  string id = 1;
+}
+
+// ----- Finish -----
+
+message Finish {
+  string id = 1;
+  string name = 2;
+  bool is_active = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message FinishResponse {
+  Finish item = 1;
+}
+
+message ListFinishesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+}
+
+message ListFinishesResponse {
+  repeated Finish items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetFinishRequest {
+  string id = 1;
+}
+
+message CreateFinishRequest {
+  string name = 1;
+}
+
+message UpdateFinishRequest {
+  string id = 1;
+  optional string name = 2;
+  optional bool is_active = 3;
+}
+
+message DeleteFinishRequest {
+  string id = 1;
+}
+
+message RestoreFinishRequest {
+  string id = 1;
+}
+
+// ----- SizeFinish (Size x Finish mapping) -----
+
+message SizeFinish {
+  string id = 1;
+  Size size = 2;
+  Finish finish = 3;
+  bool is_active = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message SizeFinishResponse {
+  SizeFinish item = 1;
+}
+
+message ListSizeFinishesResponse {
+  repeated SizeFinish items = 1;
+}
+
+message AddFinishToSizeRequest {
+  string size_id = 1;
+  string finish_id = 2;
+}
+
+message RemoveFinishFromSizeRequest {
+  string size_finish_id = 1;
+}
+
+message ListSizeFinishesBySizeRequest {
+  string size_id = 1;
+}
+
+// ----- Series -----
+
+message Series {
+  string id = 1;
+  string name = 2;
+  bool is_active = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message SeriesResponse {
+  Series item = 1;
+}
+
+message ListSeriesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+}
+
+message ListSeriesResponse {
+  repeated Series items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetSeriesRequest {
+  string id = 1;
+}
+
+message CreateSeriesRequest {
+  string name = 1;
+}
+
+message UpdateSeriesRequest {
+  string id = 1;
+  optional string name = 2;
+  optional bool is_active = 3;
+}
+
+message DeleteSeriesRequest {
+  string id = 1;
+}
+
+message RestoreSeriesRequest {
+  string id = 1;
+}
+
+// ----- SeriesSizeFinish (Series x SizeFinish mapping) -----
+
+message SeriesSizeFinish {
+  string id = 1;
+  Series series = 2;
+  SizeFinish size_finish = 3;
+  bool is_active = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message SeriesSizeFinishResponse {
+  SeriesSizeFinish item = 1;
+}
+
+message ListSeriesSizeFinishesResponse {
+  repeated SeriesSizeFinish items = 1;
+}
+
+message AddSeriesToSizeFinishRequest {
+  string series_id = 1;
+  string size_finish_id = 2;
+}
+
+message RemoveSeriesFromSizeFinishRequest {
+  string series_size_finish_id = 1;
+}
+
+message ListSeriesSizeFinishesBySeriesRequest {
+  string series_id = 1;
+}
+
+// ----- Design -----
+
+message Design {
+  string id = 1;
+  string name = 2;
+  SeriesSizeFinish mapping = 3;
+  bool is_active = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message DesignResponse {
+  Design item = 1;
+}
+
+message ListDesignsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+  string series_id = 4;
+  string size_finish_id = 5;
+  string series_size_finish_id = 6;
+}
+
+message ListDesignsResponse {
+  repeated Design items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetDesignRequest {
+  string id = 1;
+}
+
+message CreateDesignRequest {
+  string name = 1;
+  string series_size_finish_id = 2;
+}
+
+message UpdateDesignRequest {
+  string id = 1;
+  optional string name = 2;
+  optional bool is_active = 3;
+}
+
+message DeleteDesignRequest {
+  string id = 1;
+}
+
+message RestoreDesignRequest {
+  string id = 1;
+}

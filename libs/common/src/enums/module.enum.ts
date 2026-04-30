@@ -1,7 +1,8 @@
 export enum Module {
-  RAW_MATERIAL = 'raw_material',
-  PRODUCTION = 'production',
+  DASHBOARD = 'dashboard',
+  CATALOGUE = 'catalogue',
   INVENTORY = 'inventory',
+  PRODUCTION = 'production',
   ORDER = 'order',
-  DEPOT = 'depot',
+  FINANCE = 'finance',
 }

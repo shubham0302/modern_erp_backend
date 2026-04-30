@@ -5,8 +5,6 @@ import {
   ErrorCode,
   GatewayRequest,
   IS_PUBLIC_KEY,
-  Module as BusinessModule,
-  ModulePermission,
   Platform,
 } from '@modern_erp/common';
 import { AdminProto, StaffProto } from '@modern_erp/grpc-types';
@@ -23,6 +21,7 @@ import Redis from 'ioredis';
 
 import { GrpcClientRegistry } from '../grpc/grpc-client.registry';
 import { REDIS_CLIENT } from '../redis/redis.constants';
+import { buildModuleAccess } from '../utils/build-module-access';
 
 @Injectable()
 export class UserContextGuard implements CanActivate {
@@ -124,7 +123,7 @@ export class UserContextGuard implements CanActivate {
         phone: res.staff.phone,
         isActive: res.staff.isActive,
         role: { id: res.role.id, name: res.role.name },
-        moduleAccess: this.buildModuleAccess(res.permissions ?? []),
+        moduleAccess: buildModuleAccess(res.permissions ?? []),
         createdAt: res.staff.createdAt,
         updatedAt: res.staff.updatedAt,
       };
@@ -135,24 +134,4 @@ export class UserContextGuard implements CanActivate {
     return fresh;
   }
 
-  private buildModuleAccess(
-    perms: StaffProto.Permission[],
-  ): Record<BusinessModule, ModulePermission> {
-    const empty: Record<BusinessModule, ModulePermission> = {
-      [BusinessModule.RAW_MATERIAL]: { canRead: false, canWrite: false },
-      [BusinessModule.PRODUCTION]: { canRead: false, canWrite: false },
-      [BusinessModule.INVENTORY]: { canRead: false, canWrite: false },
-      [BusinessModule.ORDER]: { canRead: false, canWrite: false },
-      [BusinessModule.DEPOT]: { canRead: false, canWrite: false },
-    };
-    for (const p of perms) {
-      if ((empty as Record<string, ModulePermission>)[p.module] !== undefined) {
-        empty[p.module as BusinessModule] = {
-          canRead: p.canRead,
-          canWrite: p.canWrite,
-        };
-      }
-    }
-    return empty;
-  }
 }

@@ -15,9 +15,8 @@ service StaffService {
   rpc ListRoles (ListRolesRequest) returns (ListRolesResponse);
   rpc GetRole (GetRoleRequest) returns (RoleDetailResponse);
   rpc CreateRole (CreateRoleRequest) returns (RoleDetailResponse);
-  rpc UpdateRole (UpdateRoleRequest) returns (RoleResponse);
+  rpc UpdateRole (UpdateRoleRequest) returns (RoleDetailResponse);
   rpc DeleteRole (DeleteRoleRequest) returns (SuccessResponse);
-  rpc ReplaceRolePermissions (ReplaceRolePermissionsRequest) returns (RolePermissionsResponse);
 
   // Staff CRUD
   rpc ListStaff (ListStaffRequest) returns (ListStaffResponse);
@@ -25,7 +24,7 @@ service StaffService {
   rpc CreateStaff (CreateStaffRequest) returns (StaffResponse);
   rpc UpdateStaff (UpdateStaffRequest) returns (StaffResponse);
   rpc DeleteStaff (DeleteStaffRequest) returns (SuccessResponse);
-  rpc SetStaffActive (SetStaffActiveRequest) returns (StaffResponse);
+  rpc RecoverStaff (RecoverStaffRequest) returns (StaffResponse);
   rpc AdminChangeStaffPassword (AdminChangeStaffPasswordRequest) returns (SuccessResponse);
 
   // Security logs
@@ -142,23 +141,14 @@ message UpdateRoleRequest {
   string id = 1;
   optional string name = 2;
   optional string description = 3;
-}
-
-message RoleResponse {
-  Role role = 1;
+  // When update_permissions=true, `permissions` replaces the role's full permission set
+  // (empty list clears all). When false, the existing permissions are left untouched.
+  bool update_permissions = 4;
+  repeated Permission permissions = 5;
 }
 
 message DeleteRoleRequest {
   string id = 1;
-}
-
-message ReplaceRolePermissionsRequest {
-  string role_id = 1;
-  repeated Permission permissions = 2;
-}
-
-message RolePermissionsResponse {
-  repeated Permission permissions = 1;
 }
 
 message ListStaffRequest {
@@ -199,6 +189,7 @@ message UpdateStaffRequest {
   optional string name = 2;
   optional string phone = 3;
   optional string role_id = 4;
+  optional string email = 5;
 }
 
 message StaffResponse {
@@ -209,9 +200,8 @@ message DeleteStaffRequest {
   string id = 1;
 }
 
-message SetStaffActiveRequest {
+message RecoverStaffRequest {
   string id = 1;
-  bool is_active = 2;
 }
 
 message AdminChangeStaffPasswordRequest {

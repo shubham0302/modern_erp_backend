@@ -72,8 +72,8 @@ services:
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      ADMIN_SERVICE_URL: admin-service:5001
-      STAFF_SERVICE_URL: staff-service:5002
+      ADMIN_URL: admin:5001
+      STAFF_URL: staff:5002
     ports:
       - '${GATEWAY_PORT}:${GATEWAY_PORT}'
     volumes:
@@ -83,28 +83,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      admin-service:
+      admin:
         condition: service_started
-      staff-service:
+      staff:
         condition: service_started
     networks:
       - modern_erp
 
-  admin-service:
+  admin:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE: admin-service
-    image: modern-erp/admin-service:latest
-    container_name: modern_erp_admin_service
+        SERVICE: admin
+    image: modern-erp/admin:latest
+    container_name: modern_erp_admin
     restart: unless-stopped
     env_file:
       - .env
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      ADMIN_SERVICE_URL: 0.0.0.0:5001
+      ADMIN_URL: 0.0.0.0:5001
     volumes:
       - ./keys:/app/keys:ro
     depends_on:
@@ -115,21 +115,21 @@ services:
     networks:
       - modern_erp
 
-  staff-service:
+  staff:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE: staff-service
-    image: modern-erp/staff-service:latest
-    container_name: modern_erp_staff_service
+        SERVICE: staff
+    image: modern-erp/staff:latest
+    container_name: modern_erp_staff
     restart: unless-stopped
     env_file:
       - .env
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      STAFF_SERVICE_URL: 0.0.0.0:5002
+      STAFF_URL: 0.0.0.0:5002
     volumes:
       - ./keys:/app/keys:ro
     depends_on:

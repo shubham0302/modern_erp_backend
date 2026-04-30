@@ -19,22 +19,31 @@
         "tsConfigPath": "apps/gateway/tsconfig.app.json"
       }
     },
-    "admin-service": {
+    "admin": {
       "type": "application",
-      "root": "apps/admin-service",
+      "root": "apps/admin",
       "entryFile": "main",
-      "sourceRoot": "apps/admin-service/src",
+      "sourceRoot": "apps/admin/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/admin-service/tsconfig.app.json"
+        "tsConfigPath": "apps/admin/tsconfig.app.json"
       }
     },
-    "staff-service": {
+    "staff": {
       "type": "application",
-      "root": "apps/staff-service",
+      "root": "apps/staff",
       "entryFile": "main",
-      "sourceRoot": "apps/staff-service/src",
+      "sourceRoot": "apps/staff/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/staff-service/tsconfig.app.json"
+        "tsConfigPath": "apps/staff/tsconfig.app.json"
+      }
+    },
+    "inventory": {
+      "type": "application",
+      "root": "apps/inventory",
+      "entryFile": "main",
+      "sourceRoot": "apps/inventory/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/inventory/tsconfig.app.json"
       }
     }
   }

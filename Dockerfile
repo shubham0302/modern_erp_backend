@@ -16,8 +16,8 @@ COPY db ./db
 COPY scripts ./scripts
 
 RUN npx nest build gateway \
- && npx nest build admin-service \
- && npx nest build staff-service
+ && npx nest build admin \
+ && npx nest build staff
 
 
 FROM builder AS prod-deps

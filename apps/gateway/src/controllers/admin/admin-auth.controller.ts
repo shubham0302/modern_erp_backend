@@ -15,7 +15,7 @@ function appVersion(req: GatewayRequest): string {
 }
 
 @ApiTags('Admin · Auth')
-@Controller('admin/auth')
+@Controller('admin')
 export class AdminAuthController {
   private readonly perfLogger = new Logger('LoginPerf');
 

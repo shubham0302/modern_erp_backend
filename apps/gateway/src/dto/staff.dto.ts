@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsEmail,
   IsOptional,
   IsString,
@@ -55,12 +54,14 @@ export class UpdateStaffDto {
   @IsOptional()
   @IsUUID()
   roleId?: string;
-}
 
-export class SetStaffActiveDto {
-  @ApiProperty()
-  @IsBoolean()
-  isActive!: boolean;
+  @ApiPropertyOptional({
+    description: 'Only super admins can update email',
+    example: 'staff@modernerp.local',
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 }
 
 export class AdminChangeStaffPasswordDto {

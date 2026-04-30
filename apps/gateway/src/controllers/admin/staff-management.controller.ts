@@ -1,23 +1,33 @@
-import { GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
+import { ErrorCode, GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { StaffProto } from '@modern_erp/grpc-types';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import {
   AdminChangeStaffPasswordDto,
   CreateStaffDto,
-  SetStaffActiveDto,
   UpdateStaffDto,
 } from '../../dto/staff.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
 @ApiTags('Admin · Staff management')
 @ApiBearerAuth('access-token')
-@Controller('admin/staff')
+@Controller('admin')
 export class StaffManagementController {
   constructor(private grpc: GrpcClientRegistry) {}
 
-  @Get()
+  @Get('staff')
   @ApiOperation({ summary: 'List staff (filterable)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -49,23 +59,21 @@ export class StaffManagementController {
     );
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get staff detail by id' })
-  getDetail(
+  @Get('staff/:id')
+  @ApiOperation({ summary: 'Get staff by id (staff fields only)' })
+  async getDetail(
     @Param('id') id: string,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
-  ): Promise<StaffProto.StaffDetailResponse> {
-    return this.grpc.call<StaffProto.GetStaffDetailRequest, StaffProto.StaffDetailResponse>(
-      'staff',
-      'getStaffDetail',
-      { id },
-      ctx,
-      req.requestId,
-    );
+  ): Promise<StaffProto.Staff> {
+    const res = await this.grpc.call<
+      StaffProto.GetStaffDetailRequest,
+      StaffProto.StaffDetailResponse
+    >('staff', 'getStaffDetail', { id }, ctx, req.requestId);
+    return res.staff!;
   }
 
-  @Post()
+  @Post('create/staff')
   @ApiOperation({ summary: 'Create a new staff member' })
   create(
     @Body() body: CreateStaffDto,
@@ -88,24 +96,27 @@ export class StaffManagementController {
     );
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update staff name/phone/role' })
+  @Patch('update/staff/:id')
+  @ApiOperation({ summary: 'Update staff name/phone/role (email — super admin only)' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateStaffDto,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
   ): Promise<StaffProto.StaffResponse> {
+    if (body.email !== undefined && !ctx.isSuperAdmin) {
+      throw new ForbiddenException({ errorCode: ErrorCode.SUPER_ADMIN_REQUIRED });
+    }
     return this.grpc.call<StaffProto.UpdateStaffRequest, StaffProto.StaffResponse>(
       'staff',
       'updateStaff',
-      { id, name: body.name, phone: body.phone, roleId: body.roleId },
+      { id, name: body.name, phone: body.phone, roleId: body.roleId, email: body.email },
       ctx,
       req.requestId,
     );
   }
 
-  @Delete(':id')
+  @Delete('delete/staff/:id')
   @ApiOperation({ summary: 'Delete a staff member' })
   delete(
     @Param('id') id: string,
@@ -121,24 +132,23 @@ export class StaffManagementController {
     );
   }
 
-  @Patch(':id/active')
-  @ApiOperation({ summary: 'Activate or deactivate a staff member' })
-  setActive(
+  @Post('recover/staff/:id')
+  @ApiOperation({ summary: 'Recover a soft-deleted staff member' })
+  recover(
     @Param('id') id: string,
-    @Body() body: SetStaffActiveDto,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
   ): Promise<StaffProto.StaffResponse> {
-    return this.grpc.call<StaffProto.SetStaffActiveRequest, StaffProto.StaffResponse>(
+    return this.grpc.call<StaffProto.RecoverStaffRequest, StaffProto.StaffResponse>(
       'staff',
-      'setStaffActive',
-      { id, isActive: body.isActive },
+      'recoverStaff',
+      { id },
       ctx,
       req.requestId,
     );
   }
 
-  @Post(':id/change-password')
+  @Post('change-password/staff/:id')
   @ApiOperation({ summary: 'Admin-initiated password reset for a staff member' })
   adminChangePassword(
     @Param('id') id: string,

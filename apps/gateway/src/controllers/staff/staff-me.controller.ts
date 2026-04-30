@@ -6,15 +6,15 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangePasswordDto } from '../../dto/change-password.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
-@ApiTags('Staff · Me')
+@ApiTags('Staff · Profile')
 @ApiBearerAuth('access-token')
-@Controller('staff/me')
+@Controller('staff')
 export class StaffMeController {
   constructor(private grpc: GrpcClientRegistry) {}
 
-  @Get()
+  @Get('profile')
   @ApiOperation({ summary: 'Get the currently authenticated staff profile' })
-  me(@Req() req: GatewayRequest): CachedUser | undefined {
+  profile(@Req() req: GatewayRequest): CachedUser | undefined {
     return req.cachedUser;
   }
 

@@ -1,4 +1,9 @@
-import { ErrorCode, GatewayRequest, IS_PUBLIC_KEY } from '@modern_erp/common';
+import {
+  ErrorCode,
+  GatewayRequest,
+  IS_ANY_PLATFORM_KEY,
+  IS_PUBLIC_KEY,
+} from '@modern_erp/common';
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
@@ -12,6 +17,12 @@ export class PlatformCrossCheckGuard implements CanActivate {
       context.getClass(),
     ]);
     if (isPublic) return true;
+
+    const isAnyPlatform = this.reflector.getAllAndOverride<boolean>(IS_ANY_PLATFORM_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isAnyPlatform) return true;
 
     const req = context.switchToHttp().getRequest<GatewayRequest>();
     if (req.jwtPayload?.platform !== req.targetPlatform) {
