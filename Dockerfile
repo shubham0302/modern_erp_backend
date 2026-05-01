@@ -3,17 +3,19 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ bash
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json buf.gen.yaml ./
 RUN npm ci
 
 COPY tsconfig.json nest-cli.json ./
 COPY proto ./proto
+COPY scripts ./scripts
 COPY apps ./apps
 COPY libs ./libs
 COPY db ./db
-COPY scripts ./scripts
+
+RUN bash scripts/proto-gen.sh
 
 RUN npx nest build gateway \
  && npx nest build admin \
