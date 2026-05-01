@@ -74,6 +74,7 @@ services:
       REDIS_HOST: redis
       ADMIN_URL: admin:5001
       STAFF_URL: staff:5002
+      INVENTORY_URL: inventory:5003
     ports:
       - '${GATEWAY_PORT}:${GATEWAY_PORT}'
     volumes:
@@ -86,6 +87,8 @@ services:
       admin:
         condition: service_started
       staff:
+        condition: service_started
+      inventory:
         condition: service_started
     networks:
       - modern_erp
@@ -130,6 +133,31 @@ services:
       DB_HOST: postgres
       REDIS_HOST: redis
       STAFF_URL: 0.0.0.0:5002
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - modern_erp
+
+  inventory:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: inventory
+    image: modern-erp/inventory:latest
+    container_name: modern_erp_inventory
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      INVENTORY_URL: 0.0.0.0:5003
     volumes:
       - ./keys:/app/keys:ro
     depends_on:

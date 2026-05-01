@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'crypto';
 import { readFileSync } from 'fs';
 
 import { ErrorCode, Platform } from '@modern_erp/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,6 +47,7 @@ function rpcError(errorCode: ErrorCode): RpcException {
 
 @Injectable()
 export class AdminAuthService {
+  private readonly logger = new Logger(AdminAuthService.name);
   private readonly publicKey: string;
   private readonly privateKey: string;
   private readonly algorithm: jwt.Algorithm;
@@ -100,7 +101,7 @@ export class AdminAuthService {
 
       const tokens = await this.issueTokens(admin, input.ip, input.deviceId, input.appVersion);
 
-      await this.log.write({
+      this.fireAndForgetLog({
         adminId: admin.id,
         adminName: admin.name,
         actionType: AdminActionType.LOGIN_SUCCESS,
@@ -160,7 +161,7 @@ export class AdminAuthService {
     const row = await this.tokenRepo.findOne({ where: { tokenHash } });
     if (row && !row.revokedAt) {
       await this.tokenRepo.update({ id: row.id }, { revokedAt: new Date() });
-      await this.log.write({
+      this.fireAndForgetLog({
         adminId: row.adminId,
         adminName: null,
         actionType: AdminActionType.LOGOUT,
@@ -190,7 +191,7 @@ export class AdminAuthService {
       { revokedAt: new Date() },
     );
 
-    await this.log.write({
+    this.fireAndForgetLog({
       adminId: admin.id,
       adminName: admin.name,
       actionType: AdminActionType.PASSWORD_CHANGED,
@@ -199,6 +200,12 @@ export class AdminAuthService {
     });
 
     return { success: true };
+  }
+
+  private fireAndForgetLog(input: Parameters<AdminSecurityLogService['write']>[0]): void {
+    this.log.write(input).catch((err: unknown) => {
+      this.logger.error(`security log write failed: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }
 
   private async issueTokens(

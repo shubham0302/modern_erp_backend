@@ -2,7 +2,7 @@ import { ErrorCode } from '@modern_erp/common';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, IsNull, Repository } from 'typeorm';
 
 import { Finish } from '../entities/finish.entity';
 import { SeriesSizeFinish } from '../entities/series-size-finish.entity';
@@ -32,11 +32,19 @@ export class SizeFinishService {
     return item;
   }
 
-  async listBySize(sizeId: string, opts?: { activeOnly?: boolean }): Promise<SizeFinish[]> {
+  async listBySize(
+    sizeId: string,
+    opts?: { activeOnly?: boolean; includeDeleted?: boolean },
+  ): Promise<SizeFinish[]> {
     const [size, items] = await Promise.all([
-      this.sizeRepo.findOne({ where: { id: sizeId }, select: ['id'] }),
+      this.sizeRepo.findOne({
+        where: { id: sizeId },
+        withDeleted: opts?.includeDeleted ?? false,
+        select: ['id'],
+      }),
       this.repo.find({
         where: opts?.activeOnly ? { sizeId, isActive: true } : { sizeId },
+        withDeleted: opts?.includeDeleted ?? false,
         relations: ['size', 'finish'],
         order: { createdAt: 'DESC' },
       }),
@@ -45,18 +53,85 @@ export class SizeFinishService {
     return items;
   }
 
+  async list(input: {
+    page?: number;
+    limit?: number;
+    activeOnly?: boolean;
+    includeDeleted?: boolean;
+    fetchAll?: boolean;
+  }): Promise<{ items: SizeFinish[]; total: number; page: number; limit: number }> {
+    const where: FindOptionsWhere<SizeFinish> = {};
+    if (input.activeOnly) where.isActive = true;
+
+    if (input.fetchAll) {
+      const items = await this.repo.find({
+        where,
+        withDeleted: input.includeDeleted ?? false,
+        relations: ['size', 'finish'],
+        order: { createdAt: 'DESC' },
+      });
+      return { items, total: items.length, page: 1, limit: items.length };
+    }
+
+    const page = input.page && input.page > 0 ? input.page : 1;
+    const limit = input.limit && input.limit > 0 ? Math.min(input.limit, 200) : 50;
+
+    const [items, total] = await this.repo.findAndCount({
+      where,
+      withDeleted: input.includeDeleted ?? false,
+      relations: ['size', 'finish'],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return { items, total, page, limit };
+  }
+
+  async listByFinish(
+    finishId: string,
+    opts?: { activeOnly?: boolean; includeDeleted?: boolean },
+  ): Promise<SizeFinish[]> {
+    const [finish, items] = await Promise.all([
+      this.finishRepo.findOne({
+        where: { id: finishId },
+        withDeleted: opts?.includeDeleted ?? false,
+        select: ['id'],
+      }),
+      this.repo.find({
+        where: opts?.activeOnly ? { finishId, isActive: true } : { finishId },
+        withDeleted: opts?.includeDeleted ?? false,
+        relations: ['size', 'finish'],
+        order: { createdAt: 'DESC' },
+      }),
+    ]);
+    if (!finish) throw rpcError(ErrorCode.FINISH_NOT_FOUND);
+    return items;
+  }
+
   async addFinishToSize(input: { sizeId: string; finishId: string }): Promise<SizeFinish> {
     const [size, finish, existing] = await Promise.all([
       this.sizeRepo.findOne({ where: { id: input.sizeId } }),
       this.finishRepo.findOne({ where: { id: input.finishId } }),
       this.repo.findOne({
-        where: { sizeId: input.sizeId, finishId: input.finishId, deletedAt: IsNull() },
-        select: ['id'],
+        where: { sizeId: input.sizeId, finishId: input.finishId },
+        withDeleted: true,
       }),
     ]);
     if (!size) throw rpcError(ErrorCode.SIZE_NOT_FOUND);
     if (!finish) throw rpcError(ErrorCode.FINISH_NOT_FOUND);
-    if (existing) throw rpcError(ErrorCode.DUPLICATE_MAPPING);
+
+    if (existing && !existing.deletedAt) throw rpcError(ErrorCode.DUPLICATE_MAPPING);
+
+    if (existing) {
+      await this.repo.restore({ id: existing.id });
+      await this.repo.update({ id: existing.id }, { isActive: true });
+      const revived = await this.repo.findOneOrFail({
+        where: { id: existing.id },
+        relations: ['size', 'finish'],
+      });
+      return revived;
+    }
 
     const saved = await this.repo.save(
       this.repo.create({ sizeId: input.sizeId, finishId: input.finishId }),

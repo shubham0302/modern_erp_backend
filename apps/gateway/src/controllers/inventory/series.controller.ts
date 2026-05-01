@@ -67,7 +67,11 @@ export class SeriesController {
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Create a series' })
+  @ApiOperation({
+    summary: 'Create a series',
+    description:
+      'Optionally include sizeFinishIds to bind (size, finish) mappings to the series atomically.',
+  })
   create(
     @Body() body: CreateSeriesDto,
     @Req() req: GatewayRequest,
@@ -76,14 +80,18 @@ export class SeriesController {
     return this.grpc.call<InventoryProto.CreateSeriesRequest, InventoryProto.SeriesResponse>(
       'inventory',
       'createSeries',
-      { name: body.name },
+      { name: body.name, sizeFinishIds: body.sizeFinishIds ?? [] },
       ctx,
       req.requestId,
     );
   }
 
   @Patch('update/:id')
-  @ApiOperation({ summary: 'Update a series' })
+  @ApiOperation({
+    summary: 'Update a series',
+    description:
+      'Optional sizeFinishIds adds new (series, size, finish) combinations; optional deletedSizeFinishIds soft-deletes mappings (cascades through Design).',
+  })
   update(
     @Param('id') id: string,
     @Body() body: UpdateSeriesDto,
@@ -93,7 +101,13 @@ export class SeriesController {
     return this.grpc.call<InventoryProto.UpdateSeriesRequest, InventoryProto.SeriesResponse>(
       'inventory',
       'updateSeries',
-      { id, name: body.name, isActive: body.isActive },
+      {
+        id,
+        name: body.name,
+        isActive: body.isActive,
+        sizeFinishIds: body.sizeFinishIds ?? [],
+        deletedSizeFinishIds: body.deletedSizeFinishIds ?? [],
+      },
       ctx,
       req.requestId,
     );

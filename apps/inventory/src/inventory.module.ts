@@ -13,6 +13,7 @@ import { SeriesSizeFinishGrpcController } from './controllers/series-size-finish
 import { SizeGrpcController } from './controllers/size.grpc-controller';
 import { SizeFinishGrpcController } from './controllers/size-finish.grpc-controller';
 import { Design } from './entities/design.entity';
+import { DesignSizeFinish } from './entities/design-size-finish.entity';
 import { Finish } from './entities/finish.entity';
 import { Series } from './entities/series.entity';
 import { SeriesSizeFinish } from './entities/series-size-finish.entity';
@@ -25,7 +26,7 @@ import { SeriesSizeFinishService } from './services/series-size-finish.service';
 import { SizeService } from './services/size.service';
 import { SizeFinishService } from './services/size-finish.service';
 
-const ENTITIES = [Size, Finish, SizeFinish, Series, SeriesSizeFinish, Design];
+const ENTITIES = [Size, Finish, SizeFinish, Series, SeriesSizeFinish, Design, DesignSizeFinish];
 
 @Module({
   imports: [

@@ -13,7 +13,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { CreateDesignDto, UpdateDesignDto } from '../../dto/inventory.dto';
+import {
+  CreateDesignDto,
+  RejectDesignDto,
+  UpdateDesignDto,
+} from '../../dto/inventory.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
 
 @ApiTags('Inventory · Designs')
@@ -30,14 +34,12 @@ export class DesignController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'seriesId', required: false, type: String })
   @ApiQuery({ name: 'sizeFinishId', required: false, type: String })
-  @ApiQuery({ name: 'seriesSizeFinishId', required: false, type: String })
   list(
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
     @Query('search') search: string | undefined,
     @Query('seriesId') seriesId: string | undefined,
     @Query('sizeFinishId') sizeFinishId: string | undefined,
-    @Query('seriesSizeFinishId') seriesSizeFinishId: string | undefined,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
   ): Promise<InventoryProto.ListDesignsResponse> {
@@ -47,7 +49,6 @@ export class DesignController {
       search: search ?? '',
       seriesId: seriesId ?? '',
       sizeFinishId: sizeFinishId ?? '',
-      seriesSizeFinishId: seriesSizeFinishId ?? '',
     };
     return this.grpc.call<InventoryProto.ListDesignsRequest, InventoryProto.ListDesignsResponse>(
       'inventory',
@@ -76,8 +77,9 @@ export class DesignController {
   }
 
   @Post('create')
+  @AnyPlatform()
   @ApiOperation({
-    summary: 'Create a design under a chosen Series + (Size, Finish) mapping',
+    summary: 'Create a design under a Series with one or more SizeFinish ids',
   })
   create(
     @Body() body: CreateDesignDto,
@@ -87,7 +89,12 @@ export class DesignController {
     return this.grpc.call<InventoryProto.CreateDesignRequest, InventoryProto.DesignResponse>(
       'inventory',
       'createDesign',
-      { name: body.name, seriesSizeFinishId: body.seriesSizeFinishId },
+      {
+        name: body.name,
+        thumbnailUrl: body.thumbnailUrl ?? '',
+        seriesId: body.seriesId,
+        sizeFinishIds: body.sizeFinishIds,
+      },
       ctx,
       req.requestId,
     );
@@ -104,7 +111,14 @@ export class DesignController {
     return this.grpc.call<InventoryProto.UpdateDesignRequest, InventoryProto.DesignResponse>(
       'inventory',
       'updateDesign',
-      { id, name: body.name, isActive: body.isActive },
+      {
+        id,
+        name: body.name,
+        isActive: body.isActive,
+        thumbnailUrl: body.thumbnailUrl,
+        seriesId: body.seriesId,
+        sizeFinishIds: body.sizeFinishIds ?? [],
+      },
       ctx,
       req.requestId,
     );
@@ -137,6 +151,47 @@ export class DesignController {
       'inventory',
       'restoreDesign',
       { id },
+      ctx,
+      req.requestId,
+    );
+  }
+
+  @Post('approve/:id')
+  @ApiOperation({
+    summary: 'Approve a design',
+    description:
+      "Sets status to 'approved', stamps approvedAt, clears any rejection reason, and appends to status history.",
+  })
+  approve(
+    @Param('id') id: string,
+    @Req() req: GatewayRequest,
+    @UserCtx() ctx: UserContext,
+  ): Promise<InventoryProto.DesignResponse> {
+    return this.grpc.call<InventoryProto.ApproveDesignRequest, InventoryProto.DesignResponse>(
+      'inventory',
+      'approveDesign',
+      { id },
+      ctx,
+      req.requestId,
+    );
+  }
+
+  @Post('reject/:id')
+  @ApiOperation({
+    summary: 'Reject a design with a reason',
+    description:
+      "Sets status to 'rejected', stores the reason on the design and the latest history entry. The reason is shown to staff.",
+  })
+  reject(
+    @Param('id') id: string,
+    @Body() body: RejectDesignDto,
+    @Req() req: GatewayRequest,
+    @UserCtx() ctx: UserContext,
+  ): Promise<InventoryProto.DesignResponse> {
+    return this.grpc.call<InventoryProto.RejectDesignRequest, InventoryProto.DesignResponse>(
+      'inventory',
+      'rejectDesign',
+      { id, reason: body.reason },
       ctx,
       req.requestId,
     );

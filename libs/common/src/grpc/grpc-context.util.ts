@@ -3,6 +3,7 @@ import * as grpc from '@grpc/grpc-js';
 export interface GrpcRequestContext {
   requestId: string | undefined;
   userId: string | undefined;
+  userName: string | undefined;
   platform: string | undefined;
   ip: string | undefined;
   deviceId: string | undefined;
@@ -18,6 +19,7 @@ export function extractGrpcContext(metadata: grpc.Metadata): GrpcRequestContext 
   return {
     requestId: get('x-request-id'),
     userId: get('x-user-id'),
+    userName: get('x-user-name'),
     platform: get('x-platform'),
     ip: get('x-ip'),
     deviceId: get('x-device-id'),

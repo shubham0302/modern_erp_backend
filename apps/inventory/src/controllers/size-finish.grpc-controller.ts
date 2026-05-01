@@ -49,7 +49,45 @@ export class SizeFinishGrpcController {
     metadata: grpc.Metadata,
   ): Promise<InventoryProto.ListSizeFinishesResponse> {
     const { platform } = extractGrpcContext(metadata);
-    const items = await this.svc.listBySize(data.sizeId, { activeOnly: platform === 'staff' });
+    const items = await this.svc.listBySize(data.sizeId, {
+      activeOnly: platform === 'staff',
+      includeDeleted: platform !== 'staff',
+    });
     return { items: items.map(sizeFinishToProto) };
+  }
+
+  @GrpcMethod('InventoryService', 'ListSizeFinishesByFinish')
+  async listByFinish(
+    data: InventoryProto.ListSizeFinishesByFinishRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.ListSizeFinishesResponse> {
+    const { platform } = extractGrpcContext(metadata);
+    const items = await this.svc.listByFinish(data.finishId, {
+      activeOnly: platform === 'staff',
+      includeDeleted: platform !== 'staff',
+    });
+    return { items: items.map(sizeFinishToProto) };
+  }
+
+  @GrpcMethod('InventoryService', 'ListAllSizeFinishes')
+  async listAll(
+    data: InventoryProto.ListAllSizeFinishesRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.ListAllSizeFinishesResponse> {
+    const { platform } = extractGrpcContext(metadata);
+    const isStaff = platform === 'staff';
+    const res = await this.svc.list({
+      page: data.page,
+      limit: data.limit,
+      activeOnly: isStaff || data.activeOnly === true,
+      includeDeleted: !isStaff,
+      fetchAll: data.fetchAll,
+    });
+    return {
+      items: res.items.map(sizeFinishToProto),
+      total: res.total,
+      page: res.page,
+      limit: res.limit,
+    };
   }
 }

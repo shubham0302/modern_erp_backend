@@ -27,6 +27,15 @@ export class Finish {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
 
+  @Column({ name: 'updated_by', type: 'uuid', nullable: true })
+  updatedBy!: string | null;
+
+  @Column({ name: 'updated_by_platform', type: 'varchar', length: 16, nullable: true })
+  updatedByPlatform!: string | null;
+
+  @Column({ name: 'updated_by_name', type: 'varchar', length: 255, nullable: true })
+  updatedByName!: string | null;
+
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
 }

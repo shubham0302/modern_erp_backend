@@ -40,13 +40,10 @@ export class FinishController {
       limit: limit ? parseInt(limit, 10) : 50,
       search: search ?? '',
     };
-    return this.grpc.call<InventoryProto.ListFinishesRequest, InventoryProto.ListFinishesResponse>(
-      'inventory',
-      'listFinishes',
-      payload,
-      ctx,
-      req.requestId,
-    );
+    return this.grpc.call<
+      InventoryProto.ListFinishesRequest,
+      InventoryProto.ListFinishesResponse
+    >('inventory', 'listFinishes', payload, ctx, req.requestId);
   }
 
   @Get(':id')
@@ -67,7 +64,11 @@ export class FinishController {
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Create a finish' })
+  @ApiOperation({
+    summary: 'Create a finish',
+    description:
+      'Optionally include sizeIds to map the finish to those sizes atomically (a single transaction).',
+  })
   create(
     @Body() body: CreateFinishDto,
     @Req() req: GatewayRequest,
@@ -76,14 +77,18 @@ export class FinishController {
     return this.grpc.call<InventoryProto.CreateFinishRequest, InventoryProto.FinishResponse>(
       'inventory',
       'createFinish',
-      { name: body.name },
+      { name: body.name, sizeIds: body.sizeIds ?? [] },
       ctx,
       req.requestId,
     );
   }
 
   @Patch('update/:id')
-  @ApiOperation({ summary: 'Update a finish' })
+  @ApiOperation({
+    summary: 'Update a finish',
+    description:
+      'Optional sizeIds adds new size mappings; optional deletedSizeIds soft-deletes mappings (cascades through SeriesSizeFinish and Design).',
+  })
   update(
     @Param('id') id: string,
     @Body() body: UpdateFinishDto,
@@ -93,7 +98,13 @@ export class FinishController {
     return this.grpc.call<InventoryProto.UpdateFinishRequest, InventoryProto.FinishResponse>(
       'inventory',
       'updateFinish',
-      { id, name: body.name, isActive: body.isActive },
+      {
+        id,
+        name: body.name,
+        isActive: body.isActive,
+        sizeIds: body.sizeIds ?? [],
+        deletedSizeIds: body.deletedSizeIds ?? [],
+      },
       ctx,
       req.requestId,
     );

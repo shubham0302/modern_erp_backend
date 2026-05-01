@@ -17,7 +17,8 @@ COPY scripts ./scripts
 
 RUN npx nest build gateway \
  && npx nest build admin \
- && npx nest build staff
+ && npx nest build staff \
+ && npx nest build inventory
 
 
 FROM builder AS prod-deps

@@ -1,8 +1,8 @@
 import * as grpc from '@grpc/grpc-js';
-import { extractGrpcContext } from '@modern_erp/common';
+import { ErrorCode, extractGrpcContext } from '@modern_erp/common';
 import { InventoryProto } from '@modern_erp/grpc-types';
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, RpcException } from '@nestjs/microservices';
 
 import { Size } from '../entities/size.entity';
 import { SizeService } from '../services/size.service';
@@ -14,7 +14,20 @@ export function sizeToProto(s: Size): InventoryProto.Size {
     isActive: s.isActive,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),
+    updatedBy: s.updatedBy ?? '',
+    updatedByPlatform: s.updatedByPlatform ?? '',
+    updatedByName: s.updatedByName ?? '',
   };
+}
+
+function requireActor(metadata: grpc.Metadata): {
+  userId: string;
+  platform: string;
+  userName: string;
+} {
+  const { userId, platform, userName } = extractGrpcContext(metadata);
+  if (!userId || !platform) throw new RpcException({ errorCode: ErrorCode.INVALID_TOKEN });
+  return { userId, platform, userName: userName ?? '' };
 }
 
 @Controller()
@@ -27,11 +40,14 @@ export class SizeGrpcController {
     metadata: grpc.Metadata,
   ): Promise<InventoryProto.ListSizesResponse> {
     const { platform } = extractGrpcContext(metadata);
+    const isStaff = platform === 'staff';
     const res = await this.svc.list({
       page: data.page,
       limit: data.limit,
       search: data.search,
-      activeOnly: platform === 'staff',
+      activeOnly: isStaff || data.activeOnly === true,
+      includeDeleted: !isStaff,
+      fetchAll: data.fetchAll,
     });
     return {
       items: res.items.map(sizeToProto),
@@ -52,25 +68,46 @@ export class SizeGrpcController {
   }
 
   @GrpcMethod('InventoryService', 'CreateSize')
-  async create(data: InventoryProto.CreateSizeRequest): Promise<InventoryProto.SizeResponse> {
-    const item = await this.svc.create({ name: data.name });
+  async create(
+    data: InventoryProto.CreateSizeRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.SizeResponse> {
+    const actor = requireActor(metadata);
+    const item = await this.svc.create({ name: data.name, ...actor });
     return { item: sizeToProto(item) };
   }
 
   @GrpcMethod('InventoryService', 'UpdateSize')
-  async update(data: InventoryProto.UpdateSizeRequest): Promise<InventoryProto.SizeResponse> {
-    const item = await this.svc.update({ id: data.id, name: data.name, isActive: data.isActive });
+  async update(
+    data: InventoryProto.UpdateSizeRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.SizeResponse> {
+    const actor = requireActor(metadata);
+    const item = await this.svc.update({
+      id: data.id,
+      name: data.name,
+      isActive: data.isActive,
+      ...actor,
+    });
     return { item: sizeToProto(item) };
   }
 
   @GrpcMethod('InventoryService', 'DeleteSize')
-  delete(data: InventoryProto.DeleteSizeRequest): Promise<InventoryProto.SuccessResponse> {
-    return this.svc.delete({ id: data.id });
+  delete(
+    data: InventoryProto.DeleteSizeRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.SuccessResponse> {
+    const actor = requireActor(metadata);
+    return this.svc.delete({ id: data.id, ...actor });
   }
 
   @GrpcMethod('InventoryService', 'RestoreSize')
-  async restore(data: InventoryProto.RestoreSizeRequest): Promise<InventoryProto.SizeResponse> {
-    const item = await this.svc.restore({ id: data.id });
+  async restore(
+    data: InventoryProto.RestoreSizeRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.SizeResponse> {
+    const actor = requireActor(metadata);
+    const item = await this.svc.restore({ id: data.id, ...actor });
     return { item: sizeToProto(item) };
   }
 }

@@ -1,7 +1,7 @@
 import { AnyPlatform, GatewayRequest, UserContext, UserCtx } from '@modern_erp/common';
 import { InventoryProto } from '@modern_erp/grpc-types';
-import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { AddFinishToSizeDto, AddSeriesToSizeFinishDto } from '../../dto/inventory.dto';
 import { GrpcClientRegistry } from '../../grpc/grpc-client.registry';
@@ -53,6 +53,58 @@ export class InventoryMappingController {
       InventoryProto.ListSizeFinishesBySizeRequest,
       InventoryProto.ListSizeFinishesResponse
     >('inventory', 'listSizeFinishesBySize', { sizeId }, ctx, req.requestId);
+  }
+
+  @Get('finishes/:finishId/sizes')
+  @AnyPlatform()
+  @ApiOperation({ summary: 'List sizes the given finish is available in' })
+  listSizesForFinish(
+    @Param('finishId') finishId: string,
+    @Req() req: GatewayRequest,
+    @UserCtx() ctx: UserContext,
+  ): Promise<InventoryProto.ListSizeFinishesResponse> {
+    return this.grpc.call<
+      InventoryProto.ListSizeFinishesByFinishRequest,
+      InventoryProto.ListSizeFinishesResponse
+    >('inventory', 'listSizeFinishesByFinish', { finishId }, ctx, req.requestId);
+  }
+
+  @Get('size-finishes')
+  @AnyPlatform()
+  @ApiOperation({ summary: 'List every (size, finish) mapping across the catalog.' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'all',
+    required: false,
+    type: Boolean,
+    description: 'When true, returns every row in one response and ignores page/limit.',
+  })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    type: Boolean,
+    description:
+      'Admin override: when true, returns only active mappings. Staff is always active-only.',
+  })
+  listAllSizeFinishes(
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Query('all') all: string | undefined,
+    @Query('activeOnly') activeOnly: string | undefined,
+    @Req() req: GatewayRequest,
+    @UserCtx() ctx: UserContext,
+  ): Promise<InventoryProto.ListAllSizeFinishesResponse> {
+    const payload: InventoryProto.ListAllSizeFinishesRequest = {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 50,
+      fetchAll: all === 'true',
+      activeOnly: activeOnly === undefined ? undefined : activeOnly === 'true',
+    };
+    return this.grpc.call<
+      InventoryProto.ListAllSizeFinishesRequest,
+      InventoryProto.ListAllSizeFinishesResponse
+    >('inventory', 'listAllSizeFinishes', payload, ctx, req.requestId);
   }
 
   // ---------- Series <-> SizeFinish ----------

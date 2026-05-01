@@ -6,7 +6,7 @@ export function buildModuleAccess(
 ): Record<Module, ModulePermission> {
   const access: Record<Module, ModulePermission> = {
     [Module.DASHBOARD]: { canRead: false, canWrite: false },
-    [Module.CATALOGUE]: { canRead: false, canWrite: false },
+    [Module.DESIGNS]: { canRead: false, canWrite: false },
     [Module.INVENTORY]: { canRead: false, canWrite: false },
     [Module.PRODUCTION]: { canRead: false, canWrite: false },
     [Module.ORDER]: { canRead: false, canWrite: false },

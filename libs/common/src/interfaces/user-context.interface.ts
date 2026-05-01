@@ -35,6 +35,7 @@ export type CachedUser = CachedAdmin | CachedStaff;
 
 export interface UserContext {
   userId: string;
+  userName: string;
   platform: Platform;
   isSuperAdmin?: boolean;
   moduleAccess?: Record<Module, ModulePermission>;

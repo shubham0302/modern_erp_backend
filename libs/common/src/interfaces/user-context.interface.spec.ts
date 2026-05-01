@@ -36,7 +36,7 @@ describe('CachedUser discriminated union', () => {
       role: { id: 'r1', name: 'Sales' },
       moduleAccess: {
         [Module.DASHBOARD]: { canRead: true, canWrite: false },
-        [Module.CATALOGUE]: { canRead: false, canWrite: false },
+        [Module.DESIGNS]: { canRead: false, canWrite: false },
         [Module.INVENTORY]: { canRead: true, canWrite: true },
         [Module.PRODUCTION]: { canRead: false, canWrite: false },
         [Module.ORDER]: { canRead: true, canWrite: true },
@@ -59,6 +59,7 @@ describe('UserContext', () => {
   it('holds platform + optional isSuperAdmin and moduleAccess', () => {
     const ctx: UserContext = {
       userId: 'u1',
+      userName: 'Admin User',
       platform: Platform.ADMIN,
       isSuperAdmin: false,
       ip: '127.0.0.1',

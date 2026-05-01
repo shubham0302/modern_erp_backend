@@ -1,6 +1,6 @@
 export enum Module {
   DASHBOARD = 'dashboard',
-  CATALOGUE = 'catalogue',
+  DESIGNS = 'designs',
   INVENTORY = 'inventory',
   PRODUCTION = 'production',
   ORDER = 'order',

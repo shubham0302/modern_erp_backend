@@ -58,6 +58,7 @@ export class UserContextGuard implements CanActivate {
     req.cachedUser = user;
     req.userContext = {
       userId: user.id,
+      userName: user.name,
       platform,
       isSuperAdmin: user.kind === 'admin' ? user.isSuperAdmin : undefined,
       moduleAccess: user.kind === 'staff' ? user.moduleAccess : undefined,

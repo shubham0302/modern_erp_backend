@@ -89,6 +89,7 @@ export class GrpcClientRegistry implements OnModuleInit {
     metadata.set('x-request-id', requestId);
     if (userContext) {
       metadata.set('x-user-id', userContext.userId);
+      metadata.set('x-user-name', userContext.userName ?? '');
       metadata.set('x-platform', userContext.platform);
       metadata.set('x-ip', userContext.ip);
       metadata.set('x-device-id', userContext.deviceId ?? '');

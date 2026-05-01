@@ -89,6 +89,8 @@ export const GRPC_SERVICES = {
       addFinishToSize: { name: 'AddFinishToSize' },
       removeFinishFromSize: { name: 'RemoveFinishFromSize' },
       listSizeFinishesBySize: { name: 'ListSizeFinishesBySize' },
+      listSizeFinishesByFinish: { name: 'ListSizeFinishesByFinish' },
+      listAllSizeFinishes: { name: 'ListAllSizeFinishes' },
       // Series
       listSeries: { name: 'ListSeries' },
       getSeries: { name: 'GetSeries' },
@@ -107,6 +109,8 @@ export const GRPC_SERVICES = {
       updateDesign: { name: 'UpdateDesign' },
       deleteDesign: { name: 'DeleteDesign' },
       restoreDesign: { name: 'RestoreDesign' },
+      approveDesign: { name: 'ApproveDesign' },
+      rejectDesign: { name: 'RejectDesign' },
     },
   },
 } as const satisfies Record<string, GrpcServiceDef>;

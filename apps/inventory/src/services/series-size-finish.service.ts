@@ -2,9 +2,10 @@ import { ErrorCode } from '@modern_erp/common';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { Design } from '../entities/design.entity';
+import { DesignSizeFinish } from '../entities/design-size-finish.entity';
 import { SeriesSizeFinish } from '../entities/series-size-finish.entity';
 import { Series } from '../entities/series.entity';
 import { SizeFinish } from '../entities/size-finish.entity';
@@ -19,7 +20,6 @@ export class SeriesSizeFinishService {
     @InjectRepository(SeriesSizeFinish) private repo: Repository<SeriesSizeFinish>,
     @InjectRepository(Series) private seriesRepo: Repository<Series>,
     @InjectRepository(SizeFinish) private sizeFinishRepo: Repository<SizeFinish>,
-    @InjectRepository(Design) private designRepo: Repository<Design>,
     private dataSource: DataSource,
   ) {}
 
@@ -59,17 +59,24 @@ export class SeriesSizeFinishService {
         relations: ['size', 'finish'],
       }),
       this.repo.findOne({
-        where: {
-          seriesId: input.seriesId,
-          sizeFinishId: input.sizeFinishId,
-          deletedAt: IsNull(),
-        },
-        select: ['id'],
+        where: { seriesId: input.seriesId, sizeFinishId: input.sizeFinishId },
+        withDeleted: true,
       }),
     ]);
     if (!series) throw rpcError(ErrorCode.SERIES_NOT_FOUND);
     if (!sizeFinish) throw rpcError(ErrorCode.SIZE_FINISH_NOT_FOUND);
-    if (existing) throw rpcError(ErrorCode.DUPLICATE_MAPPING);
+
+    if (existing && !existing.deletedAt) throw rpcError(ErrorCode.DUPLICATE_MAPPING);
+
+    if (existing) {
+      await this.repo.restore({ id: existing.id });
+      await this.repo.update({ id: existing.id }, { isActive: true });
+      const revived = await this.repo.findOneOrFail({
+        where: { id: existing.id },
+        relations: ['series', 'sizeFinish', 'sizeFinish.size', 'sizeFinish.finish'],
+      });
+      return revived;
+    }
 
     const saved = await this.repo.save(
       this.repo.create({ seriesId: input.seriesId, sizeFinishId: input.sizeFinishId }),
@@ -84,14 +91,19 @@ export class SeriesSizeFinishService {
   }): Promise<{ success: boolean }> {
     return this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(SeriesSizeFinish);
-      const designRepo = manager.getRepository(Design);
+      const dsfRepo = manager.getRepository(DesignSizeFinish);
 
       const target = await repo.findOne({ where: { id: input.seriesSizeFinishId } });
       if (!target) throw rpcError(ErrorCode.SERIES_SIZE_FINISH_NOT_FOUND);
 
-      const inUse = await designRepo.count({
-        where: { seriesSizeFinishId: target.id, deletedAt: IsNull() },
-      });
+      const inUse = await dsfRepo
+        .createQueryBuilder('dsf')
+        .innerJoin(Design, 'd', 'd.id = dsf.design_id')
+        .where('d.series_id = :seriesId', { seriesId: target.seriesId })
+        .andWhere('dsf.size_finish_id = :sfId', { sfId: target.sizeFinishId })
+        .andWhere('dsf.deleted_at IS NULL')
+        .andWhere('d.deleted_at IS NULL')
+        .getCount();
       if (inUse > 0) throw rpcError(ErrorCode.RESOURCE_IN_USE);
 
       await repo.softDelete({ id: target.id });

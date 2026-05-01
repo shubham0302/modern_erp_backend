@@ -3,8 +3,8 @@ import { Module } from './module.enum';
 describe('Module enum', () => {
   it('has 6 business module members', () => {
     expect(Object.keys(Module).sort()).toEqual([
-      'CATALOGUE',
       'DASHBOARD',
+      'DESIGNS',
       'FINANCE',
       'INVENTORY',
       'ORDER',
@@ -14,7 +14,7 @@ describe('Module enum', () => {
 
   it('uses lowercase string values', () => {
     expect(Module.DASHBOARD).toBe('dashboard');
-    expect(Module.CATALOGUE).toBe('catalogue');
+    expect(Module.DESIGNS).toBe('designs');
     expect(Module.INVENTORY).toBe('inventory');
     expect(Module.PRODUCTION).toBe('production');
     expect(Module.ORDER).toBe('order');

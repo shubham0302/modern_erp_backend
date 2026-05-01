@@ -4,20 +4,41 @@ import { InventoryProto } from '@modern_erp/grpc-types';
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 
-import { Design } from '../entities/design.entity';
-import { DesignService } from '../services/design.service';
+import { DesignService, DesignWithRelations } from '../services/design.service';
 
-import { seriesSizeFinishToProto } from './series-size-finish.grpc-controller';
+import { seriesToProto } from './series.grpc-controller';
+import { sizeFinishToProto } from './size-finish.grpc-controller';
 
-export function designToProto(d: Design): InventoryProto.Design {
+export function designToProto(d: DesignWithRelations): InventoryProto.Design {
   return {
     id: d.id,
     name: d.name,
-    mapping: d.seriesSizeFinish ? seriesSizeFinishToProto(d.seriesSizeFinish) : undefined,
+    thumbnailUrl: d.thumbnailUrl ?? '',
+    series: d.series ? seriesToProto(d.series) : undefined,
+    sizeFinishes: (d.sizeFinishes ?? []).map(sizeFinishToProto),
     isActive: d.isActive,
     createdAt: d.createdAt.toISOString(),
     updatedAt: d.updatedAt.toISOString(),
+    status: d.status,
+    approvedAt: d.approvedAt ? d.approvedAt.toISOString() : '',
+    statusHistory: (d.statusHistory ?? []).map((e) => ({
+      status: e.status,
+      date: e.date,
+      reason: e.reason ?? '',
+    })),
+    rejectionReason: d.rejectionReason ?? '',
+    createdBy: d.createdBy ?? '',
+    createdByName: d.createdByName ?? '',
+    approvedBy: d.approvedBy ?? '',
+    approvedByName: d.approvedByName ?? '',
+    updatedBy: d.updatedBy ?? '',
+    updatedByName: d.updatedByName ?? '',
   };
+}
+
+function actor(metadata: grpc.Metadata): { userId: string; userName: string; platform: string } {
+  const { userId, userName, platform } = extractGrpcContext(metadata);
+  return { userId: userId ?? '', userName: userName ?? '', platform: platform ?? '' };
 }
 
 @Controller()
@@ -36,7 +57,6 @@ export class DesignGrpcController {
       search: data.search,
       seriesId: data.seriesId || undefined,
       sizeFinishId: data.sizeFinishId || undefined,
-      seriesSizeFinishId: data.seriesSizeFinishId || undefined,
       activeOnly: platform === 'staff',
     });
     return {
@@ -58,30 +78,78 @@ export class DesignGrpcController {
   }
 
   @GrpcMethod('InventoryService', 'CreateDesign')
-  async create(data: InventoryProto.CreateDesignRequest): Promise<InventoryProto.DesignResponse> {
+  async create(
+    data: InventoryProto.CreateDesignRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.DesignResponse> {
+    const { userId, userName, platform } = actor(metadata);
     const item = await this.svc.create({
       name: data.name,
-      seriesSizeFinishId: data.seriesSizeFinishId,
+      thumbnailUrl: data.thumbnailUrl || null,
+      seriesId: data.seriesId,
+      sizeFinishIds: data.sizeFinishIds ?? [],
+      platform,
+      userId,
+      userName,
     });
     return { item: designToProto(item) };
   }
 
   @GrpcMethod('InventoryService', 'UpdateDesign')
-  async update(data: InventoryProto.UpdateDesignRequest): Promise<InventoryProto.DesignResponse> {
-    const item = await this.svc.update({ id: data.id, name: data.name, isActive: data.isActive });
+  async update(
+    data: InventoryProto.UpdateDesignRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.DesignResponse> {
+    const { userId, userName } = actor(metadata);
+    const item = await this.svc.update({
+      id: data.id,
+      name: data.name,
+      isActive: data.isActive,
+      thumbnailUrl: data.thumbnailUrl,
+      seriesId: data.seriesId,
+      sizeFinishIds: data.sizeFinishIds,
+      userId,
+      userName,
+    });
     return { item: designToProto(item) };
   }
 
   @GrpcMethod('InventoryService', 'DeleteDesign')
-  delete(data: InventoryProto.DeleteDesignRequest): Promise<InventoryProto.SuccessResponse> {
-    return this.svc.delete({ id: data.id });
+  delete(
+    data: InventoryProto.DeleteDesignRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.SuccessResponse> {
+    const { userId, userName } = actor(metadata);
+    return this.svc.delete({ id: data.id, userId, userName });
   }
 
   @GrpcMethod('InventoryService', 'RestoreDesign')
   async restore(
     data: InventoryProto.RestoreDesignRequest,
+    metadata: grpc.Metadata,
   ): Promise<InventoryProto.DesignResponse> {
-    const item = await this.svc.restore({ id: data.id });
+    const { userId, userName } = actor(metadata);
+    const item = await this.svc.restore({ id: data.id, userId, userName });
+    return { item: designToProto(item) };
+  }
+
+  @GrpcMethod('InventoryService', 'ApproveDesign')
+  async approve(
+    data: InventoryProto.ApproveDesignRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.DesignResponse> {
+    const { userId, userName } = actor(metadata);
+    const item = await this.svc.approve({ id: data.id, userId, userName });
+    return { item: designToProto(item) };
+  }
+
+  @GrpcMethod('InventoryService', 'RejectDesign')
+  async reject(
+    data: InventoryProto.RejectDesignRequest,
+    metadata: grpc.Metadata,
+  ): Promise<InventoryProto.DesignResponse> {
+    const { userId, userName } = actor(metadata);
+    const item = await this.svc.reject({ id: data.id, reason: data.reason, userId, userName });
     return { item: designToProto(item) };
   }
 }

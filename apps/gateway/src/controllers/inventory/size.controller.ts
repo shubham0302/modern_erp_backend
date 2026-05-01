@@ -28,10 +28,25 @@ export class SizeController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({
+    name: 'all',
+    required: false,
+    type: Boolean,
+    description: 'When true, returns every row in one response and ignores page/limit.',
+  })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    type: Boolean,
+    description:
+      'Admin override: when true, returns only active sizes. Staff is always active-only.',
+  })
   list(
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
     @Query('search') search: string | undefined,
+    @Query('all') all: string | undefined,
+    @Query('activeOnly') activeOnly: string | undefined,
     @Req() req: GatewayRequest,
     @UserCtx() ctx: UserContext,
   ): Promise<InventoryProto.ListSizesResponse> {
@@ -39,6 +54,8 @@ export class SizeController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 50,
       search: search ?? '',
+      fetchAll: all === 'true',
+      activeOnly: activeOnly === undefined ? undefined : activeOnly === 'true',
     };
     return this.grpc.call<InventoryProto.ListSizesRequest, InventoryProto.ListSizesResponse>(
       'inventory',

@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'crypto';
 import { readFileSync } from 'fs';
 
 import { ErrorCode, Platform } from '@modern_erp/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -50,6 +50,7 @@ function rpcError(errorCode: ErrorCode): RpcException {
 
 @Injectable()
 export class StaffAuthService {
+  private readonly logger = new Logger(StaffAuthService.name);
   private readonly publicKey: string;
   private readonly privateKey: string;
   private readonly algorithm: jwt.Algorithm;
@@ -98,13 +99,14 @@ export class StaffAuthService {
       throw rpcError(ErrorCode.WRONG_PASSWORD);
     }
 
-    const tokens = await this.issueTokens(staff, input.ip, input.deviceId, input.appVersion);
-
-    const role = await this.roleRepo.findOne({ where: { id: staff.roleId } });
+    const [tokens, role, permissions] = await Promise.all([
+      this.issueTokens(staff, input.ip, input.deviceId, input.appVersion),
+      this.roleRepo.findOne({ where: { id: staff.roleId } }),
+      this.permRepo.find({ where: { roleId: staff.roleId } }),
+    ]);
     if (!role) throw rpcError(ErrorCode.ROLE_NOT_FOUND);
-    const permissions = await this.permRepo.find({ where: { roleId: staff.roleId } });
 
-    await this.log.write({
+    this.fireAndForgetLog({
       staffId: staff.id,
       staffName: staff.name,
       actionType: StaffActionType.LOGIN_SUCCESS,
@@ -152,9 +154,11 @@ export class StaffAuthService {
 
     await this.tokenRepo.update({ id: row.id }, { revokedAt: new Date() });
 
-    const tokens = await this.issueTokens(staff, input.ip, input.deviceId, input.appVersion);
-    const role = await this.roleRepo.findOneOrFail({ where: { id: staff.roleId } });
-    const permissions = await this.permRepo.find({ where: { roleId: staff.roleId } });
+    const [tokens, role, permissions] = await Promise.all([
+      this.issueTokens(staff, input.ip, input.deviceId, input.appVersion),
+      this.roleRepo.findOneOrFail({ where: { id: staff.roleId } }),
+      this.permRepo.find({ where: { roleId: staff.roleId } }),
+    ]);
 
     return { ...tokens, staff, role, permissions };
   }
@@ -164,7 +168,7 @@ export class StaffAuthService {
     const row = await this.tokenRepo.findOne({ where: { tokenHash } });
     if (row && !row.revokedAt) {
       await this.tokenRepo.update({ id: row.id }, { revokedAt: new Date() });
-      await this.log.write({
+      this.fireAndForgetLog({
         staffId: row.staffId,
         staffName: null,
         actionType: StaffActionType.LOGOUT,
@@ -194,7 +198,7 @@ export class StaffAuthService {
       { revokedAt: new Date() },
     );
 
-    await this.log.write({
+    this.fireAndForgetLog({
       staffId: staff.id,
       staffName: staff.name,
       actionType: StaffActionType.PASSWORD_CHANGED,
@@ -203,6 +207,12 @@ export class StaffAuthService {
     });
 
     return { success: true };
+  }
+
+  private fireAndForgetLog(input: Parameters<StaffSecurityLogService['write']>[0]): void {
+    this.log.write(input).catch((err: unknown) => {
+      this.logger.error(`security log write failed: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }
 
   private async issueTokens(

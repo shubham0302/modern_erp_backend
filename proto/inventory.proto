@@ -22,6 +22,8 @@ service InventoryService {
   rpc AddFinishToSize (AddFinishToSizeRequest) returns (SizeFinishResponse);
   rpc RemoveFinishFromSize (RemoveFinishFromSizeRequest) returns (SuccessResponse);
   rpc ListSizeFinishesBySize (ListSizeFinishesBySizeRequest) returns (ListSizeFinishesResponse);
+  rpc ListSizeFinishesByFinish (ListSizeFinishesByFinishRequest) returns (ListSizeFinishesResponse);
+  rpc ListAllSizeFinishes (ListAllSizeFinishesRequest) returns (ListAllSizeFinishesResponse);
 
   // Series CRUD
   rpc ListSeries (ListSeriesRequest) returns (ListSeriesResponse);
@@ -43,6 +45,8 @@ service InventoryService {
   rpc UpdateDesign (UpdateDesignRequest) returns (DesignResponse);
   rpc DeleteDesign (DeleteDesignRequest) returns (SuccessResponse);
   rpc RestoreDesign (RestoreDesignRequest) returns (DesignResponse);
+  rpc ApproveDesign (ApproveDesignRequest) returns (DesignResponse);
+  rpc RejectDesign (RejectDesignRequest) returns (DesignResponse);
 }
 
 // ----- Common -----
@@ -59,6 +63,12 @@ message Size {
   bool is_active = 3;
   string created_at = 4;
   string updated_at = 5;
+  // User id of the last actor who created/updated/soft-deleted/restored this row.
+  string updated_by = 6;
+  // Which platform that actor belongs to ("admin" or "staff"). Empty for legacy rows.
+  string updated_by_platform = 7;
+  // Display name of the actor at the time of the last write. Empty for legacy rows.
+  string updated_by_name = 8;
 }
 
 message SizeResponse {
@@ -69,6 +79,8 @@ message ListSizesRequest {
   int32 page = 1;
   int32 limit = 2;
   string search = 3;
+  bool fetch_all = 4;
+  optional bool active_only = 5;
 }
 
 message ListSizesResponse {
@@ -108,6 +120,14 @@ message Finish {
   bool is_active = 3;
   string created_at = 4;
   string updated_at = 5;
+  // Populated by ListFinishes and GetFinish. Other endpoints leave this empty.
+  repeated Size sizes = 6;
+  // User id of the last actor who created/updated/soft-deleted/restored this row.
+  string updated_by = 7;
+  // Which platform that actor belongs to ("admin" or "staff"). Empty for legacy rows.
+  string updated_by_platform = 8;
+  // Display name of the actor at the time of the last write. Empty for legacy rows.
+  string updated_by_name = 9;
 }
 
 message FinishResponse {
@@ -133,12 +153,18 @@ message GetFinishRequest {
 
 message CreateFinishRequest {
   string name = 1;
+  repeated string size_ids = 2;
 }
 
 message UpdateFinishRequest {
   string id = 1;
   optional string name = 2;
   optional bool is_active = 3;
+  // Sizes to add as new (size, finish) mappings. Idempotent for already-mapped sizes.
+  repeated string size_ids = 4;
+  // Sizes whose mapping with this finish should be soft-deleted.
+  // Cascades through SeriesSizeFinish and Design.
+  repeated string deleted_size_ids = 5;
 }
 
 message DeleteFinishRequest {
@@ -181,6 +207,24 @@ message ListSizeFinishesBySizeRequest {
   string size_id = 1;
 }
 
+message ListSizeFinishesByFinishRequest {
+  string finish_id = 1;
+}
+
+message ListAllSizeFinishesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  bool fetch_all = 3;
+  optional bool active_only = 4;
+}
+
+message ListAllSizeFinishesResponse {
+  repeated SizeFinish items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
 // ----- Series -----
 
 message Series {
@@ -189,6 +233,14 @@ message Series {
   bool is_active = 3;
   string created_at = 4;
   string updated_at = 5;
+  // Populated by ListSeries and GetSeries. Other endpoints leave this empty.
+  repeated SizeFinish size_finishes = 6;
+  // User id of the last actor who created/updated/soft-deleted/restored this row.
+  string updated_by = 7;
+  // Which platform that actor belongs to ("admin" or "staff"). Empty for legacy rows.
+  string updated_by_platform = 8;
+  // Display name of the actor at the time of the last write. Empty for legacy rows.
+  string updated_by_name = 9;
 }
 
 message SeriesResponse {
@@ -214,12 +266,21 @@ message GetSeriesRequest {
 
 message CreateSeriesRequest {
   string name = 1;
+  // (size, finish) mapping ids to bind to this series at creation. Each becomes
+  // a SeriesSizeFinish row in the same transaction; mismatched ids throw SIZE_FINISH_NOT_FOUND.
+  repeated string size_finish_ids = 2;
 }
 
 message UpdateSeriesRequest {
   string id = 1;
   optional string name = 2;
   optional bool is_active = 3;
+  // SizeFinish ids to add as new (series, size, finish) combinations.
+  // Idempotent for already-mapped pairs.
+  repeated string size_finish_ids = 4;
+  // SizeFinish ids whose mapping with this series should be soft-deleted.
+  // Cascades through Design.
+  repeated string deleted_size_finish_ids = 5;
 }
 
 message DeleteSeriesRequest {
@@ -267,10 +328,37 @@ message ListSeriesSizeFinishesBySeriesRequest {
 message Design {
   string id = 1;
   string name = 2;
-  SeriesSizeFinish mapping = 3;
-  bool is_active = 4;
-  string created_at = 5;
-  string updated_at = 6;
+  // Optional thumbnail URL. Empty when unset.
+  string thumbnail_url = 3;
+  Series series = 4;
+  repeated SizeFinish size_finishes = 5;
+  bool is_active = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  // Workflow state. One of: "pending", "approved", "rejected".
+  string status = 9;
+  // ISO timestamp of the most recent transition into "approved". Empty otherwise.
+  string approved_at = 10;
+  // Append-only history of status transitions, oldest first.
+  repeated DesignStatusEntry status_history = 11;
+  // Reason supplied with the most recent rejection. Cleared when approved.
+  string rejection_reason = 12;
+  // Actor who first created this design. Empty for legacy rows.
+  string created_by = 13;
+  string created_by_name = 14;
+  // Actor who last transitioned this design into "approved". Empty when never approved.
+  string approved_by = 15;
+  string approved_by_name = 16;
+  // Actor of the last write (create/update/approve/reject/restore).
+  string updated_by = 17;
+  string updated_by_name = 18;
+}
+
+message DesignStatusEntry {
+  string status = 1;
+  string date = 2;
+  // Set only when status = "rejected".
+  string reason = 3;
 }
 
 message DesignResponse {
@@ -283,7 +371,6 @@ message ListDesignsRequest {
   string search = 3;
   string series_id = 4;
   string size_finish_id = 5;
-  string series_size_finish_id = 6;
 }
 
 message ListDesignsResponse {
@@ -299,13 +386,23 @@ message GetDesignRequest {
 
 message CreateDesignRequest {
   string name = 1;
-  string series_size_finish_id = 2;
+  // Optional thumbnail URL. Empty string means unset.
+  string thumbnail_url = 2;
+  string series_id = 3;
+  // SizeFinish ids the design covers. Each must be bound to series_id via
+  // SeriesSizeFinish, otherwise SERIES_SIZE_FINISH_NOT_FOUND.
+  repeated string size_finish_ids = 4;
 }
 
 message UpdateDesignRequest {
   string id = 1;
   optional string name = 2;
   optional bool is_active = 3;
+  // Pass empty string to clear; omit to leave unchanged.
+  optional string thumbnail_url = 4;
+  optional string series_id = 5;
+  // When non-empty, replaces the design's SizeFinish set. Empty leaves it unchanged.
+  repeated string size_finish_ids = 6;
 }
 
 message DeleteDesignRequest {
@@ -314,4 +411,13 @@ message DeleteDesignRequest {
 
 message RestoreDesignRequest {
   string id = 1;
+}
+
+message ApproveDesignRequest {
+  string id = 1;
+}
+
+message RejectDesignRequest {
+  string id = 1;
+  string reason = 2;
 }
